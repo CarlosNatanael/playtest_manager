@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}View Game: {{ game.title }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-secondary bg-dark">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <img src="https://media.retroachievements.org{{ game.image_icon }}" class="rounded me-3 border border-secondary" style="width: 80px; height: 80px; object-fit: cover;">
+                    <div>
+                        <h2 class="mb-1 text-ra-blue fw-bold">{{ game.title }}</h2>
+                        <span class="badge bg-secondary">{{ game.console_name }}</span>
+                        <span class="text-muted ms-2 small">Author: <strong class="text-white">{{ game.developer }}</strong></span>
+                    </div>
+                </div>
+                <div>
+                    <a href="{{ url_for('dashboard.index') }}" class="btn btn-outline-light me-2">Back</a>
+                    <a href="{{ url_for('dashboard.claim_game', game_id=game.id) }}" class="btn btn-success fw-bold">Claim for Testing</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <h4 class="mb-3 text-ra-gold">Achievement Set ({{ game.achievements|length }})</h4>
+        {% for ach in game.achievements %}
+        <div class="card border-secondary mb-2 bg-black">
+            <div class="card-body d-flex align-items-center">
+                <img src="https://media.retroachievements.org/Badge/{{ ach.id }}.png" style="width: 48px;" class="me-3 opacity-75">
+                <div>
+                    <h6 class="mb-0 fw-bold text-white">{{ ach.title }} ({{ ach.points }})</h6>
+                    <p class="small text-muted mb-0">{{ ach.description }}</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

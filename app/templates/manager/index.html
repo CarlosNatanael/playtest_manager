@@ -1,102 +1,68 @@
 {% extends 'base.html' %}
-
-{% block title %}QA Manager Dashboard{% endblock %}
-
 {% block content %}
-<div class="row mb-4">
-    <div class="col-12 d-flex justify-content-between align-items-center">
-        <div>
-            <h2 class="text-white mb-0">QA Manager Dashboard</h2>
-            <p class="text-muted small mt-1">Overview of all games imported into the database.</p>
-        </div>
-        <a href="{{ url_for('manager.import_game') }}" class="btn btn-primary fw-bold">
-            + Import New Game
-        </a>
-    </div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="text-white">QA Manager Dashboard</h2>
+    <a href="{{ url_for('manager.import_game') }}" class="btn btn-primary fw-bold">+ Import New Game</a>
 </div>
 
-<div class="row">
-    <div class="col-12">
-        <div class="card border-secondary bg-dark shadow-sm">
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-dark table-hover align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th class="px-4">ID</th>
-                                <th>Game</th>
-                                <th>Set Author</th>
-                                <th>Status / Tester</th>
-                                <th>Request Date</th>
-                                <th>Achievements</th>
-                                <th class="text-end px-4">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for game in games %}
-                            <tr>
-                                <td class="text-muted px-4">#{{ game.id }}</td>
-                                <td>
-                                    <div class="d-flex align-items-center py-2">
-                                        <img src="https://media.retroachievements.org{{ game.image_icon }}" alt="Cover" class="rounded me-3 border border-secondary" style="width: 48px; height: 48px; object-fit: cover;" onerror="this.src='https://media.retroachievements.org/Images/00000.png'">
-                                        <div>
-                                            <span class="text-ra-blue fw-bold d-block">{{ game.title }}</span>
-                                            <div class="mt-1 d-flex align-items-center text-muted small">
-                                                <img src="https://static.retroachievements.org/assets/images/system/{{ game.get_console_icon() }}.png" 
-                                                     alt="{{ game.console_name }}" 
-                                                     style="width: 16px; height: 16px; object-fit: contain;" 
-                                                     class="me-1"
-                                                     onerror="this.style.display='none'">
-                                                <span>{{ game.console_name }}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <img src="https://media.retroachievements.org{{ game.developer_pic }}" class="rounded-circle me-2" style="width: 32px; height: 32px; border: 2px solid #ffcc00;" onerror="this.src='https://media.retroachievements.org/UserPic/RetroAchievements.png'">
-                                        <span>{{ game.developer }}</span>
-                                    </div>
-                                </td>
-                                <td>
-                                    {% if game.status == 'In Progress' %}
-                                        {% set active_session = game.test_sessions|selectattr('status', 'equalto', 'Active')|first %}
-                                        <div class="d-flex flex-column">
-                                            <span class="badge bg-primary mb-1">Being Tested</span>
-                                            <span class="small text-white">by <strong>{{ active_session.tester.ra_username if active_session else 'Unknown' }}</strong></span>
-                                        </div>
-                                    {% else %}
-                                        <span class="badge bg-success">Open</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <div class="d-flex flex-column">
-                                        <span class="text-white small">{{ game.created_at.strftime('%m/%d/%Y') }}</span>
-                                        {% set days_open = (now - game.created_at).days %}
-                                        <span class="text-muted" style="font-size: 0.75rem;">{{ days_open }} days ago</span>
-                                    </div>
-                                </td>
-                                <td>{{ game.achievements|length }}</td>
-                                <td class="text-end px-4">
-                                    <div class="d-inline-flex">
-                                        <form action="{{ url_for('manager.delete_game', game_id=game.id) }}" method="POST" onsubmit="return confirm('Confirm delete?')">
-                                            <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% else %}
-                            <tr>
-                                <td colspan="7" class="text-center text-muted py-5">
-                                    No games in the QA Database yet.
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+<div class="card bg-dark border-secondary">
+    <div class="table-responsive">
+        <table class="table table-dark table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th class="px-4">Game</th>
+                    <th>Status / Tester</th>
+                    <th>Request Date</th>
+                    <th class="text-end px-4">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for game in games %}
+                <tr>
+                    <td class="px-4">
+                        <div class="d-flex align-items-center">
+                            <img src="https://media.retroachievements.org{{ game.image_icon }}" class="rounded me-3" style="width: 48px; height: 48px; object-fit: cover;">
+                            <div>
+                                <span class="text-ra-blue fw-bold d-block">{{ game.title }}</span>
+                                <div class="mt-1 d-flex align-items-center text-muted small">
+                                    <img src="https://static.retroachievements.org/assets/images/system/{{ game.get_console_icon() }}.png" 
+                                         alt="{{ game.console_name }}" 
+                                         style="width: 16px; height: 16px; object-fit: contain;" 
+                                         class="me-1"
+                                         onerror="this.style.display='none'">
+                                    <span>{{ game.console_name }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        {% if game.status == 'In Progress' %}
+                            {% set session = game.test_sessions|selectattr('status', 'equalto', 'Active')|first %}
+                            <span class="badge bg-primary">Being Tested</span>
+                            <div class="small text-muted">by {{ session.tester.ra_username if session else 'Unknown' }}</div>
+                        {% else %}
+                            <span class="badge bg-success">Open</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="small text-white">{{ game.created_at.strftime('%d/%m/%Y') }}</div>
+                        {% set days = (now - game.created_at).days %}
+                        <div class="text-{{ 'danger' if days > 7 else 'muted' }}" style="font-size: 0.75rem;">
+                            {{ days }} days in queue
+                        </div>
+                    </td>
+                    <td class="text-end px-4">
+                        {% if game.status == 'In Progress' and session %}
+                            <a href="{{ url_for('manager.review_session', session_id=session.id) }}" class="btn btn-sm btn-outline-info">Review Progress</a>
+                        {% endif %}
+                        <form action="{{ url_for('manager.delete_game', game_id=game.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete game and all test data?')">
+                            <button class="btn btn-sm btn-outline-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}

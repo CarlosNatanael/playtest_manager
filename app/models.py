@@ -65,11 +65,11 @@ class Game(db.Model):
         'Intellivision': 'intv',
         'Atari Jaguar': 'jag',
         'Atari Lynx': 'lynx',
-        'Mega Drive': 'md',
+        'Genesis/Mega Drive': 'md',
         'MSX': 'msx',
         'Nokia N-Gage': 'n-gage',
         'Nintendo 64': 'n64',
-        'Nintendo Entertainment System': 'nes',
+        'NES/Famicom': 'nes',
         'Neo Geo CD': 'ngcd',
         'Neo Geo Pocket': 'ngp',
         'PC-FX': 'pc-fx',
@@ -112,6 +112,7 @@ class TestSession(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    is_collab = db.Column(db.Boolean, default=False)
     game_id = db.Column(db.Integer, db.ForeignKey('games.id'), nullable=False)
     
     # Condições do teste preenchidas pelo playtester
@@ -131,6 +132,9 @@ class TestResult(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     session_id = db.Column(db.Integer, db.ForeignKey('test_sessions.id'), nullable=False)
     achievement_id = db.Column(db.Integer, db.ForeignKey('achievements.id'), nullable=False)
+    trigger_status = db.Column(db.String(20), nullable=True)
+    notes = db.Column(db.Text, nullable=True) # Para salvar as "Issue Descriptions"
+    save_state_link = db.Column(db.String(500), nullable=True)
     
     # Estados: None (não testado), OK, FALSE_TRIGGER, NO_TRIGGER, OK_AFTER_RETEST
     trigger_status = db.Column(db.String(20), nullable=True) 
