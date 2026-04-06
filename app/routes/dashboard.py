@@ -36,4 +36,5 @@ def claim_game(game_id):
 @dashboard_bp.route('/session/<int:session_id>')
 def test_session(session_id):
     session = TestSession.query.get_or_404(session_id)
-    return render_template('dashboard/session.html', session=session)
+    results = {r.achievement_id: r for r in session.results}
+    return render_template('dashboard/session.html', session=session, results=results)

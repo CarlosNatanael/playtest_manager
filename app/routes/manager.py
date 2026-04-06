@@ -1,7 +1,6 @@
-# Adicione o 'flash' aqui nos imports do flask
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app import db
-from app.models import Game, Achievement
+from app.models import Game, Achievement, TestSession
 from app.services.ra_api import fetch_game_and_achievements
 from datetime import datetime
 
@@ -11,6 +10,11 @@ manager_bp = Blueprint('manager', __name__)
 def index():
     games = Game.query.all()
     return render_template('manager/index.html', games=games, now=datetime.utcnow())
+
+@manager_bp.route('/review/<int:session_id>')
+def review_session(session_id):
+    session = TestSession.query.get_or_404(session_id)
+    return render_template('manager/session_view.html', session=session)
 
 @manager_bp.route('/import', methods=['GET', 'POST'])
 def import_game():

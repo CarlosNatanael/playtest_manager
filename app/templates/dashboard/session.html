@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Active Session - Formula 1{% endblock %}
+{% block title %}Session: {{ session.game.title }}{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
@@ -9,11 +9,14 @@
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <div class="d-flex align-items-center">
-                        <img src="https://media.retroachievements.org/Images/126734.png" alt="Cover" class="rounded me-3 border border-secondary" style="width: 80px; height: 80px; object-fit: cover;">
+                        <img src="https://media.retroachievements.org{{ session.game.image_icon }}" class="rounded me-3 border border-secondary" style="width: 80px; height: 80px; object-fit: cover;">
                         <div>
-                            <h2 class="mb-1 text-ra-blue fw-bold">Formula 1</h2>
-                            <span class="badge bg-secondary">PlayStation</span>
-                            <span class="text-muted ms-2 small">Tested by: <strong class="text-white">Cnat</strong></span>
+                            <h2 class="mb-1 text-ra-blue fw-bold">{{ session.game.title }}</h2>
+                            <div class="d-flex align-items-center text-muted">
+                                <img src="https://static.retroachievements.org/assets/images/system/{{ session.game.get_console_icon() }}.png" style="width: 20px;" class="me-2">
+                                <span class="badge bg-secondary me-2">{{ session.game.console_name }}</span>
+                                <span class="small">Tester: <strong class="text-white">{{ session.tester.ra_username }}</strong></span>
+                            </div>
                         </div>
                     </div>
                     <div class="text-end">
@@ -22,14 +25,18 @@
                     </div>
                 </div>
 
-                <div class="row g-3 bg-dark p-3 rounded">
-                    <div class="col-md-4">
-                        <label class="form-label text-ra-gold small fw-bold">Emulator Core</label>
-                        <input type="text" class="form-control form-control-sm bg-black text-white border-secondary" placeholder="e.g., SwanStation">
+                <div class="row g-3 bg-dark p-3 rounded border border-secondary">
+                    <div class="col-md-3">
+                        <label class="form-label text-ra-gold small fw-bold">Emulator</label>
+                        <input type="text" class="form-control form-control-sm bg-black text-white border-secondary" placeholder="e.g. RetroArch">
                     </div>
-                    <div class="col-md-8">
+                    <div class="col-md-3">
+                        <label class="form-label text-ra-gold small fw-bold">Core</label>
+                        <input type="text" class="form-control form-control-sm bg-black text-white border-secondary" value="{{ session.core or '' }}" placeholder="e.g. SwanStation">
+                    </div>
+                    <div class="col-md-6">
                         <label class="form-label text-ra-gold small fw-bold">ROM Hash</label>
-                        <input type="text" class="form-control form-control-sm bg-black text-white border-secondary" placeholder="Paste the hash used...">
+                        <input type="text" class="form-control form-control-sm bg-black text-white border-secondary" value="{{ session.hash_used or '' }}" placeholder="Paste the hash used...">
                     </div>
                 </div>
             </div>
@@ -38,94 +45,60 @@
 </div>
 
 <div class="row">
-    <div class="col-lg-3 mb-4">
+    <div class="col-lg-4 mb-4">
         <div class="card border-secondary sticky-top" style="top: 20px;">
-            <div class="card-header bg-dark text-white fw-bold">
-                General Checklist
-            </div>
+            <div class="card-header bg-dark text-ra-gold fw-bold">General Checklist</div>
             <div class="card-body p-0">
                 <ul class="list-group list-group-flush">
-                    <li class="list-group-item bg-transparent text-white d-flex align-items-center">
-                        <input class="form-check-input me-2 mt-0" type="checkbox" value="">
-                        <span class="small">Load a completed save</span>
+                    {% set checks = [
+                        'Load a completed save', 'Let demo play ~5 cycles',
+                        'Test 2 Player protection', 'Test game mode protection',
+                        'Test dip switch protection', 'Check/note multiple hashes linked',
+                        'Test load with different bios', 'Check "measured" achievements'
+                    ] %}
+                    {% for item in checks %}
+                    <li class="list-group-item bg-transparent text-white border-secondary py-3">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="check_{{ loop.index }}">
+                            <label class="form-check-label small fw-bold" for="check_{{ loop.index }}">{{ item }}</label>
+                        </div>
+                        <textarea class="form-control form-control-sm bg-black text-white border-secondary" rows="1" placeholder="Add observations..."></textarea>
                     </li>
-                    <li class="list-group-item bg-transparent text-white d-flex align-items-center">
-                        <input class="form-check-input me-2 mt-0" type="checkbox" value="">
-                        <span class="small">Test 2 Player protection</span>
-                    </li>
-                    <li class="list-group-item bg-transparent text-white d-flex align-items-center">
-                        <input class="form-check-input me-2 mt-0" type="checkbox" value="">
-                        <span class="small">Check multiple hashes</span>
-                    </li>
+                    {% endfor %}
                 </ul>
             </div>
         </div>
     </div>
 
-    <div class="col-lg-9">
-        <h4 class="mb-3 text-ra-gold">Achievements (10/40 Tested)</h4>
-
-        <div class="card border-secondary mb-3">
+    <div class="col-lg-8">
+        <h4 class="mb-3 text-white">Achievements ({{ session.game.achievements|length }})</h4>
+        {% for ach in session.game.achievements %}
+        <div class="card border-secondary mb-3 achievement-card">
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start">
+                <div class="d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center">
-                        <img src="https://media.retroachievements.org/Badge/00000.png" alt="Badge" class="me-3 opacity-50" style="width: 48px; height: 48px;">
+                        <img src="https://media.retroachievements.org/Badge/{{ ach.id }}.png" class="me-3" style="width: 48px;" onerror="this.src='https://media.retroachievements.org/Badge/00000.png'">
                         <div>
-                            <h6 class="mb-1 fw-bold">Pole Position Interlagos (10)</h6>
-                            <p class="mb-0 text-muted small">Grand Prix mode get pole position in Interlagos in default settings or harder</p>
+                            <h6 class="mb-0 fw-bold">{{ ach.title }}</h6>
+                            <p class="text-muted small mb-0">{{ ach.description }}</p>
                         </div>
                     </div>
-                    
-                    <div class="btn-group trigger-options" role="group">
-                        <input type="radio" class="btn-check trigger-radio" name="ach_1" id="ok_1" value="OK" autocomplete="off">
-                        <label class="btn btn-outline-success btn-sm px-3" for="ok_1">OK</label>
-                    
-                        <input type="radio" class="btn-check trigger-radio" name="ach_1" id="false_1" value="FALSE_TRIGGER" autocomplete="off">
-                        <label class="btn btn-outline-danger btn-sm px-3" for="false_1">False Trigger</label>
-                    
-                        <input type="radio" class="btn-check trigger-radio" name="ach_1" id="no_1" value="NO_TRIGGER" autocomplete="off">
-                        <label class="btn btn-outline-warning btn-sm px-3" for="no_1">No Trigger</label>
+                    <div class="btn-group" role="group">
+                        <input type="radio" class="btn-check trigger-radio" name="ach_{{ ach.id }}" id="ok_{{ ach.id }}" value="OK" checked>
+                        <label class="btn btn-outline-success btn-sm" for="ok_{{ ach.id }}">OK</label>
+                        
+                        <input type="radio" class="btn-check trigger-radio" name="ach_{{ ach.id }}" id="err_{{ ach.id }}" value="ERROR">
+                        <label class="btn btn-outline-danger btn-sm" for="err_{{ ach.id }}">Issue</label>
                     </div>
+                </div>
+
+                <div class="evidence-box d-none mt-3 p-3 bg-black rounded border border-danger">
+                    <textarea class="form-control form-control-sm bg-dark text-white border-secondary mb-2" rows="2" placeholder="Describe the issue..."></textarea>
+                    <input type="text" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Save State Link">
                 </div>
             </div>
         </div>
-
-        <div class="card border-danger mb-3 bg-dark">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div class="d-flex align-items-center">
-                        <img src="https://media.retroachievements.org/Badge/00000.png" alt="Badge" class="me-3" style="width: 48px; height: 48px;">
-                        <div>
-                            <h6 class="mb-1 fw-bold text-danger">Pole Position Montreal (10)</h6>
-                            <p class="mb-0 text-muted small">Grand Prix mode get pole position in Montreal in default settings or harder</p>
-                        </div>
-                    </div>
-                    
-                    <div class="btn-group trigger-options" role="group">
-                        <input type="radio" class="btn-check trigger-radio" name="ach_2" id="ok_2" value="OK" autocomplete="off">
-                        <label class="btn btn-outline-success btn-sm px-3" for="ok_2">OK</label>
-                    
-                        <input type="radio" class="btn-check trigger-radio" name="ach_2" id="false_2" value="FALSE_TRIGGER" autocomplete="off">
-                        <label class="btn btn-outline-danger btn-sm px-3" for="false_2">False Trigger</label>
-                    
-                        <input type="radio" class="btn-check trigger-radio" name="ach_2" id="no_2" value="NO_TRIGGER" autocomplete="off">
-                        <label class="btn btn-outline-warning btn-sm px-3" for="no_2">No Trigger</label>
-                    </div>
-                </div>
-
-                <div class="evidence-box mt-3 p-3 bg-black rounded border border-danger border-opacity-50 d-none">
-                    <div class="mb-2">
-                        <label class="form-label text-danger small fw-bold">Trigger Notes</label>
-                        <textarea class="form-control form-control-sm bg-dark text-white border-secondary trigger-note" rows="2" placeholder="Explain how the false trigger happened..."></textarea>
-                    </div>
-                    <div>
-                        <label class="form-label text-danger small fw-bold">Save State / Logic Link</label>
-                        <input type="url" class="form-control form-control-sm bg-dark text-white border-secondary trigger-link" placeholder="https://...">
-                    </div>
-                </div>
-            </div>
-        </div>
-
+        {% endfor %}
     </div>
 </div>
 {% endblock %}
