@@ -71,3 +71,15 @@ class TestResult(db.Model):
     save_state_link = db.Column(db.String(500), nullable=True)
     
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+def atualizar_cargo_do_usuario(user, permissoes_do_ra):
+    
+    if 'Playtest Manager' in permissoes_do_ra or 'Quality Assurance' in permissoes_do_ra:
+        user.role = 'manager'  # Acesso total, importa jogos
+    elif 'Code Reviewer' in permissoes_do_ra:
+        user.role = 'cr'       # Acesso ao painel de raio-x
+    elif 'Play Tester' in permissoes_do_ra:
+        user.role = 'playtester' # Acesso ao dashboard de testes
+    else:
+        user.role = 'bloqueado'  # Usuário comum do RA que não faz parte da equipe
+    db.session.commit()
