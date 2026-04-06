@@ -15,7 +15,8 @@ def create_app():
     from app.routes.dashboard import dashboard_bp
     from app.routes.manager import manager_bp
     from app.routes.public import public_bp
-    
+
+    app.register_blueprint(public_bp)
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
     app.register_blueprint(manager_bp, url_prefix='/manager')

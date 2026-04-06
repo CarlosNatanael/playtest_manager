@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard | Playtester{% endblock %}
+
+{% block content %}
+<div class="row mb-5">
+    <div class="col-12">
+        <h3 class="mb-4 text-ra-gold">My Ongoing Tests</h3>
+        
+        <div class="row g-3">
+            <div class="col-md-6 col-lg-4"> <div class="card h-100 shadow-sm border-primary">
+                    <div class="card-body">
+                        <div class="d-flex mb-3">
+                            <img src="https://media.retroachievements.org/Images/126734.png" alt="Cover" class="rounded me-3 border border-secondary" style="width: 64px; height: 64px; object-fit: cover;">
+                            <div class="w-100">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h5 class="card-title mb-1 text-ra-blue fw-bold text-truncate" style="max-width: 180px;">Formula 1</h5>
+                                        <img src="https://static.retroachievements.org/assets/images/system/ps1.png" alt="PlayStation" class="-mt-1"><span>PlayStation</span>
+                                    </div>
+                                    <span class="badge bg-primary ms-2">In Progress</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <p class="card-text text-muted small mb-2">Started on: 06/04/2026 | Deadline: 13/04/2026</p>
+                        <div class="progress mb-3 bg-dark" style="height: 8px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 25%;"></div>
+                        </div>
+                        <div class="d-flex justify-content-between small text-muted mb-3">
+                            <span>Progress</span>
+                            <span>10/40</span>
+                        </div>
+                        
+                        <a href="#" class="btn btn-primary btn-sm w-100 fw-bold">Continue Testing</a>
+                    </div>
+                </div>
+            </div>
+            </div>
+    </div>
+</div>
+
+<hr class="border-secondary mb-5">
+
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="text-white">Request Board</h3>
+            <span class="badge badge-jr px-3 py-2">Priority: Junior Devs</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-dark table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Game</th>
+                        <th>Developer</th>
+                        <th>Achievements</th>
+                        <th>Status / Slots</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img src="https://media.retroachievements.org/Images/124471.png" alt="Cover" class="rounded me-3 border border-secondary" style="width: 48px; height: 48px; object-fit: cover;">
+                                <div>
+                                    <span class="text-ra-blue fw-bold d-block">Wonder Boy: The Dragon's Trap</span>
+                                    <img src="https://static.retroachievements.org/assets/images/system/gg.png" alt="Game Gear" class="-mt-1"> <span>Game Gear</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img src="https://media.retroachievements.org/UserPic/Halbarad.png" alt="Halbarad" class="rounded-circle me-2" style="width: 32px; height: 32px; border: 2px solid #ffcc00;">
+                                <span>Halbarad <span class="badge badge-jr ms-1">Jr</span></span>
+                            </div>
+                        </td>
+                        <td>40</td>
+                        <td><span class="badge bg-success">Open (Solo)</span></td>
+                        <td><button class="btn btn-outline-success btn-sm">Claim</button></td>
+                    </tr>
+                    
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img src="https://media.retroachievements.org/Images/072121.png" alt="Cover" class="rounded me-3 border border-secondary" style="width: 48px; height: 48px; object-fit: cover;">
+                                <div>
+                                    <span class="text-ra-blue fw-bold d-block">Jump Super Stars</span>
+                                    <img src="https://static.retroachievements.org/assets/images/system/ds.png" alt="Nintendo DS" class="-mt-1"> <span>Nintendo DS</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img src="https://media.retroachievements.org/UserPic/ZintheDestroyr.png" alt="ZintheDestroyr" class="rounded-circle me-2" style="width: 32px; height: 32px; border: 2px solid #ffcc00;">
+                                <span>ZintheDestroyr <span class="badge badge-jr ms-1">Jr</span></span>
+                            </div>
+                        </td>
+                        <td>120</td>
+                        <td><span class="badge badge-collab">Collab (1/2)</span></td>
+                        <td><button class="btn btn-outline-light btn-sm">Join Test</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
