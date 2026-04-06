@@ -1,38 +1,41 @@
 import requests
-import os
 from flask import current_app
 
-RA_API_BASE_URL = "https://retroachievements.org/api/v2"
-
-def _get_headers(access_token=None):
-    """Monta o cabeçalho de autenticação dependendo do cenário."""
-    if access_token:
-        return {"Authorization": f"Bearer {access_token}"}
-    
-    api_key = current_app.config.get('RA_API_KEY')
-    if api_key:
-        return {"X-API-Key": api_key}
-    return {}
-
 def fetch_game_and_achievements(game_id, access_token=None):
-    """
-    Bate na API V2, puxa os dados do jogo e as conquistas Unofficial.
-    Retorna um dicionário padronizado para o nosso Manager salvar no banco.
-    """
-    url = f"{RA_API_BASE_URL}/games/{game_id}"
-    headers = _get_headers(access_token)
+    url = "https://retroachievements.org/API/API_GetGameExtended.php"
     
+    username = current_app.config.get('RA_USERNAME')
+    api_key = current_app.config.get('RA_API_KEY')
+    
+    if not username or not api_key:
+        return None, "Erro: RA_USERNAME ou RA_API_KEY não configurados no config.py"
+    params = {
+        "z": username,
+        "y": api_key,
+        "i": game_id,
+        "f": 5
+    }
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, params=params)
         response.raise_for_status()
         data = response.json()
-        
+        if 'ID' not in data:
+            return None, "Jogo não encontrado no RetroAchievements."
         game_data = {
             'id': data.get('ID'),
             'title': data.get('Title'),
             'developer': data.get('Developer'),
             'achievements': []
         }
+        achievements_dict = data.get('Achievements', {})
+        for ach_id, ach_info in achievements_dict.items():
+            game_data['achievements'].append({
+                'id': ach_info.get('ID'),
+                'title': ach_info.get('Title'),
+                'description': ach_info.get('Description'),
+                'points': ach_info.get('Points')
+            })
         return game_data, None
+        
     except requests.exceptions.RequestException as e:
-        return None, f"Erro ao comunicar com a API do RA: {str(e)}"
+        return None, f"Erro de comunicação: {str(e)}"

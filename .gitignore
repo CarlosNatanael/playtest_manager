@@ -8,6 +8,7 @@ __pycache__/
 
 # Distribution / packaging
 config.py
+init_db.py
 .Python
 build/
 develop-eggs/

@@ -61,47 +61,45 @@
                     </tr>
                 </thead>
                 <tbody>
+                    {% for game in open_games %}
                     <tr>
                         <td>
                             <div class="d-flex align-items-center">
-                                <img src="https://media.retroachievements.org/Images/124471.png" alt="Cover" class="rounded me-3 border border-secondary" style="width: 48px; height: 48px; object-fit: cover;">
+                                <img src="https://media.retroachievements.org/Images/00000.png" alt="Cover" class="rounded me-3 border border-secondary" style="width: 48px; height: 48px; object-fit: cover;">
                                 <div>
-                                    <span class="text-ra-blue fw-bold d-block">Wonder Boy: The Dragon's Trap</span>
-                                    <img src="https://static.retroachievements.org/assets/images/system/gg.png" alt="Game Gear" class="-mt-1"> <span>Game Gear</span>
+                                    <span class="text-ra-blue fw-bold d-block">{{ game.title }}</span>
+                                    <span class="badge bg-secondary mt-1">ID: {{ game.id }}</span>
                                 </div>
                             </div>
                         </td>
                         <td>
                             <div class="d-flex align-items-center">
-                                <img src="https://media.retroachievements.org/UserPic/Halbarad.png" alt="Halbarad" class="rounded-circle me-2" style="width: 32px; height: 32px; border: 2px solid #ffcc00;">
-                                <span>Halbarad <span class="badge badge-jr ms-1">Jr</span></span>
+                                <img src="https://media.retroachievements.org/UserPic/{{ game.developer }}.png" alt="{{ game.developer }}" class="rounded-circle me-2" style="width: 32px; height: 32px; border: 2px solid #ffcc00;" onerror="this.src='https://media.retroachievements.org/UserPic/RetroAchievements.png'">
+                                <span>{{ game.developer }} 
+                                    {% if game.developer_level == 'Junior' %}
+                                        <span class="badge badge-jr ms-1">Jr</span>
+                                    {% endif %}
+                                </span>
                             </div>
                         </td>
-                        <td>40</td>
-                        <td><span class="badge bg-success">Open (Solo)</span></td>
-                        <td><button class="btn btn-outline-success btn-sm">Claim</button></td>
+                        <td>{{ game.achievements|length }}</td>
+                        
+                        <td>
+                            {% if game.is_collab %}
+                                <span class="badge badge-collab">Collab</span>
+                            {% else %}
+                                <span class="badge bg-success">Open (Solo)</span>
+                            {% endif %}
+                        </td>
+                        <td><button class="btn btn-outline-success btn-sm fw-bold">Claim</button></td>
                     </tr>
-                    
+                    {% else %}
                     <tr>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <img src="https://media.retroachievements.org/Images/072121.png" alt="Cover" class="rounded me-3 border border-secondary" style="width: 48px; height: 48px; object-fit: cover;">
-                                <div>
-                                    <span class="text-ra-blue fw-bold d-block">Jump Super Stars</span>
-                                    <img src="https://static.retroachievements.org/assets/images/system/ds.png" alt="Nintendo DS" class="-mt-1"> <span>Nintendo DS</span>
-                                </div>
-                            </div>
+                        <td colspan="5" class="text-center text-muted py-4">
+                            No games available in the QA queue right now.
                         </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <img src="https://media.retroachievements.org/UserPic/ZintheDestroyr.png" alt="ZintheDestroyr" class="rounded-circle me-2" style="width: 32px; height: 32px; border: 2px solid #ffcc00;">
-                                <span>ZintheDestroyr <span class="badge badge-jr ms-1">Jr</span></span>
-                            </div>
-                        </td>
-                        <td>120</td>
-                        <td><span class="badge badge-collab">Collab (1/2)</span></td>
-                        <td><button class="btn btn-outline-light btn-sm">Join Test</button></td>
                     </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
