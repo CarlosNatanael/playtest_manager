@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Import Game | Manager{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="card border-primary shadow-lg">
+            <div class="card-header bg-dark text-ra-blue fw-bold text-center py-3">
+                <h4 class="mb-0">Import Game to QA Queue</h4>
+            </div>
+            <div class="card-body p-4 bg-dark">
+                <form action="{{ url_for('manager.import_game') }}" method="POST">
+                    <div class="mb-4">
+                        <label for="game_id" class="form-label text-ra-gold fw-bold">RetroAchievements Game ID</label>
+                        <input type="number" class="form-control form-control-lg bg-black text-white border-secondary" id="game_id" name="game_id" placeholder="e.g., 124471" required>
+                        <div class="form-text text-muted mt-2">You can find the Game ID in the URL of the game's page on the RA website.</div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold">
+                        Fetch & Import Data
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="alert alert-dark border-secondary mt-4 small text-muted" role="alert">
+            <strong>Note:</strong> Importing a game will automatically fetch all Unofficial/Core achievements and add the game to the Request Board for playtesters to claim.
+        </div>
+    </div>
+</div>
+{% endblock %}

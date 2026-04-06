@@ -8,4 +8,4 @@ def index():
 
 @dashboard_bp.route('/session/<int:session_id>')
 def test_session(session_id):
-    return f"Interface de teste para a sessão {session_id}."
+    return render_template('dashboard/session.html')

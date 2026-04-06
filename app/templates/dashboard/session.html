@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block title %}Active Session - Formula 1{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-secondary">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="d-flex align-items-center">
+                        <img src="https://media.retroachievements.org/Images/126734.png" alt="Cover" class="rounded me-3 border border-secondary" style="width: 80px; height: 80px; object-fit: cover;">
+                        <div>
+                            <h2 class="mb-1 text-ra-blue fw-bold">Formula 1</h2>
+                            <span class="badge bg-secondary">PlayStation</span>
+                            <span class="text-muted ms-2 small">Tested by: <strong class="text-white">Cnat</strong></span>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <button class="btn btn-outline-danger btn-sm mb-2 w-100">Abandon Test</button>
+                        <button class="btn btn-success fw-bold w-100">Conclude Test</button>
+                    </div>
+                </div>
+
+                <div class="row g-3 bg-dark p-3 rounded">
+                    <div class="col-md-4">
+                        <label class="form-label text-ra-gold small fw-bold">Emulator Core</label>
+                        <input type="text" class="form-control form-control-sm bg-black text-white border-secondary" placeholder="e.g., SwanStation">
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label text-ra-gold small fw-bold">ROM Hash</label>
+                        <input type="text" class="form-control form-control-sm bg-black text-white border-secondary" placeholder="Paste the hash used...">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-3 mb-4">
+        <div class="card border-secondary sticky-top" style="top: 20px;">
+            <div class="card-header bg-dark text-white fw-bold">
+                General Checklist
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item bg-transparent text-white d-flex align-items-center">
+                        <input class="form-check-input me-2 mt-0" type="checkbox" value="">
+                        <span class="small">Load a completed save</span>
+                    </li>
+                    <li class="list-group-item bg-transparent text-white d-flex align-items-center">
+                        <input class="form-check-input me-2 mt-0" type="checkbox" value="">
+                        <span class="small">Test 2 Player protection</span>
+                    </li>
+                    <li class="list-group-item bg-transparent text-white d-flex align-items-center">
+                        <input class="form-check-input me-2 mt-0" type="checkbox" value="">
+                        <span class="small">Check multiple hashes</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-9">
+        <h4 class="mb-3 text-ra-gold">Achievements (10/40 Tested)</h4>
+
+        <div class="card border-secondary mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="d-flex align-items-center">
+                        <img src="https://media.retroachievements.org/Badge/00000.png" alt="Badge" class="me-3 opacity-50" style="width: 48px; height: 48px;">
+                        <div>
+                            <h6 class="mb-1 fw-bold">Pole Position Interlagos (10)</h6>
+                            <p class="mb-0 text-muted small">Grand Prix mode get pole position in Interlagos in default settings or harder</p>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group trigger-options" role="group">
+                        <input type="radio" class="btn-check trigger-radio" name="ach_1" id="ok_1" value="OK" autocomplete="off">
+                        <label class="btn btn-outline-success btn-sm px-3" for="ok_1">OK</label>
+                    
+                        <input type="radio" class="btn-check trigger-radio" name="ach_1" id="false_1" value="FALSE_TRIGGER" autocomplete="off">
+                        <label class="btn btn-outline-danger btn-sm px-3" for="false_1">False Trigger</label>
+                    
+                        <input type="radio" class="btn-check trigger-radio" name="ach_1" id="no_1" value="NO_TRIGGER" autocomplete="off">
+                        <label class="btn btn-outline-warning btn-sm px-3" for="no_1">No Trigger</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-danger mb-3 bg-dark">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="d-flex align-items-center">
+                        <img src="https://media.retroachievements.org/Badge/00000.png" alt="Badge" class="me-3" style="width: 48px; height: 48px;">
+                        <div>
+                            <h6 class="mb-1 fw-bold text-danger">Pole Position Montreal (10)</h6>
+                            <p class="mb-0 text-muted small">Grand Prix mode get pole position in Montreal in default settings or harder</p>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group trigger-options" role="group">
+                        <input type="radio" class="btn-check trigger-radio" name="ach_2" id="ok_2" value="OK" autocomplete="off">
+                        <label class="btn btn-outline-success btn-sm px-3" for="ok_2">OK</label>
+                    
+                        <input type="radio" class="btn-check trigger-radio" name="ach_2" id="false_2" value="FALSE_TRIGGER" autocomplete="off">
+                        <label class="btn btn-outline-danger btn-sm px-3" for="false_2">False Trigger</label>
+                    
+                        <input type="radio" class="btn-check trigger-radio" name="ach_2" id="no_2" value="NO_TRIGGER" autocomplete="off">
+                        <label class="btn btn-outline-warning btn-sm px-3" for="no_2">No Trigger</label>
+                    </div>
+                </div>
+
+                <div class="evidence-box mt-3 p-3 bg-black rounded border border-danger border-opacity-50 d-none">
+                    <div class="mb-2">
+                        <label class="form-label text-danger small fw-bold">Trigger Notes</label>
+                        <textarea class="form-control form-control-sm bg-dark text-white border-secondary trigger-note" rows="2" placeholder="Explain how the false trigger happened..."></textarea>
+                    </div>
+                    <div>
+                        <label class="form-label text-danger small fw-bold">Save State / Logic Link</label>
+                        <input type="url" class="form-control form-control-sm bg-dark text-white border-secondary trigger-link" placeholder="https://...">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
