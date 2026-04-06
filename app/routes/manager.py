@@ -40,7 +40,9 @@ def import_game():
             developer_level=dev_level,
             status='Open',
             is_collab=game_data.get('is_collab', False),
-            image_icon=game_data.get('image_icon'),
+            developer_id=game_data.get('developer_id'),
+            developer_pic=game_data.get('developer_pic'),
+            image_icon=game_data.get('image_icon'), 
             console_name=game_data.get('console_name')
         )
         db.session.add(new_game)

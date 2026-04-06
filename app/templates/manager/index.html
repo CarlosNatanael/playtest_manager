@@ -37,7 +37,7 @@
                                 <td class="text-muted px-4">#{{ game.id }}</td>
                                 <td>
                                     <div class="d-flex align-items-center py-2">
-                                        <img src="https://media.retroachievements.org{{ game.developer_pic }}" alt="{{ game.developer }}" class="rounded-circle me-2" style="width: 32px; height: 32px; border: 2px solid #ffcc00;"onerror="this.src='https://media.retroachievements.org/UserPic/RetroAchievements.png'">
+                                        <img src="https://media.retroachievements.org{{ game.image_icon }}" alt="Cover" class="rounded me-3 border border-secondary" style="width: 48px; height: 48px; object-fit: cover;" onerror="this.src='https://media.retroachievements.org/Images/00000.png'">
                                         <div>
                                             <span class="text-ra-blue fw-bold d-block">{{ game.title }}</span>
                                             <div class="mt-1 d-flex align-items-center text-muted small">
@@ -56,7 +56,7 @@
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <img src="https://media.retroachievements.org/UserPic/{{ game.developer }}.png" alt="Dev" class="rounded-circle me-2" style="width: 32px; height: 32px; border: 2px solid #ffcc00;" onerror="this.src='https://media.retroachievements.org/UserPic/RetroAchievements.png'">
+                                        <img src="https://media.retroachievements.org{{ game.developer_pic }}" alt="{{ game.developer }}" class="rounded-circle me-2" style="width: 32px; height: 32px; border: 2px solid #ffcc00;"onerror="this.src='https://media.retroachievements.org/UserPic/RetroAchievements.png'">
                                         <span>{{ game.developer }}</span>
                                     </div>
                                 </td>
