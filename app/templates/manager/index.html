@@ -62,7 +62,7 @@
                                 </td>
                                 <td>
                                     {% if game.status == 'Open' %}
-                                        <span class="badge bg-success">Open in QA</span>
+                                        <span class="badge bg-success">Open</span>
                                     {% elif game.status == 'In Progress' %}
                                         <span class="badge bg-primary">Being Tested</span>
                                     {% else %}
@@ -72,6 +72,14 @@
                                 <td>{{ game.achievements|length }}</td>
                                 <td class="text-end px-4">
                                     <button class="btn btn-outline-light btn-sm" disabled title="Feature em construção">Manage</button>
+                                    <div class="d-inline-flex">
+                                        <button class="btn btn-outline-light btn-sm me-2" disabled>Edit</button>
+                                        <form action="{{ url_for('manager.delete_game', game_id=game.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja remover este jogo? Todos os dados de teste serão perdidos.')">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                <i class="bi bi-trash"></i> Delete
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                             {% else %}

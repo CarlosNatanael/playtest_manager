@@ -29,7 +29,7 @@ class Game(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     achievements = db.relationship('Achievement', backref='game', lazy=True, cascade="all, delete-orphan")
-    test_sessions = db.relationship('TestSession', backref='game', lazy=True)
+    test_sessions = db.relationship('TestSession', backref='game', lazy=True, cascade="all, delete-orphan")
 
     def get_console_icon(self):
         """Traduz o nome do console salvo no banco para o nome da imagem do RA"""
@@ -57,10 +57,10 @@ class Game(db.Model):
         'Nintendo Famicom Disk System': 'fds',
         'FM Towns': 'fm-towns',
         'Game & Watch': 'g&w',
-        'Nintendo Game Boy': 'gb',
-        'Nintendo Game Boy Advance': 'gba',
-        'Nintendo Game Boy Color': 'gbc',
-        'Nintendo GameCube': 'gc',
+        'Game Boy': 'gb',
+        'Game Boy Advance': 'gba',
+        'Game Boy Color': 'gbc',
+        'GameCube': 'gc',
         'Sega Game Gear': 'gg',
         'Intellivision': 'intv',
         'Atari Jaguar': 'jag',

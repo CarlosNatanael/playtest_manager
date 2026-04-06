@@ -62,3 +62,12 @@ def import_game():
         return redirect(url_for('manager.index'))
 
     return render_template('manager/import.html')
+
+@manager_bp.route('/delete/<int:game_id>', methods=['POST'])
+def delete_game(game_id):
+    game = Game.query.get_or_404(game_id)
+    title = game.title
+    db.session.delete(game)
+    db.session.commit()
+    flash(f"Game '{title}' removed from database.", "success")
+    return redirect(url_for('manager.index'))
