@@ -102,6 +102,7 @@ class Achievement(db.Model):
     game_id = db.Column(db.Integer, db.ForeignKey('games.id'), nullable=False)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=False)
+    badge_name = db.Column(db.String(50))
     points = db.Column(db.Integer, default=0)
     
     # Relacionamento com os resultados

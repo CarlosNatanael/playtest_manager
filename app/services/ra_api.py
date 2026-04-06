@@ -54,7 +54,8 @@ def fetch_game_and_achievements(game_id, access_token=None):
                 'id': ach_info.get('ID'),
                 'title': ach_info.get('Title'),
                 'description': ach_info.get('Description'),
-                'points': ach_info.get('Points')
+                'points': ach_info.get('Points'),
+                'badge_name': ach_info.get('BadgeName')
             })
         if authors_data:
             names = list(authors_data.keys())

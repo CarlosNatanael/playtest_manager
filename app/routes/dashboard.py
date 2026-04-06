@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from app.models import Game, TestSession, db, TestResult
 from datetime import datetime, timedelta
+import json
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -42,7 +43,18 @@ def claim_game(game_id):
 def test_session(session_id):
     session = TestSession.query.get_or_404(session_id)
     results_map = {r.achievement_id: r for r in session.results}
-    return render_template('dashboard/session.html', session=session, results=results_map)
+
+    checklist_dict = {}
+    if session.checklist_data:
+        try:
+            checklist_dict = json.loads(session.checklist_data)
+        except:
+            pass
+
+    return render_template('dashboard/session.html', 
+                           session=session, 
+                           results=results_map, 
+                           checklist=checklist_dict)
 
 @dashboard_bp.route('/session/save/<int:session_id>', methods=['POST'])
 def save_session(session_id):

@@ -76,19 +76,19 @@
                         'Test dip switch protection', 'Check/note multiple hashes linked',
                         'Test load with different bios', 'Check "measured" achievements'
                     ] %}
-                        {% set checklist = session.checklist_data|from_json if session.checklist_data else {} %}
-                        {% for item in checks %}
-                        <li class="list-group-item bg-transparent text-white border-secondary py-3">
-                            <div class="form-check mb-2">
-                                <input class="form-check-input autosave-checklist" type="checkbox" 
-                                       name="check_{{ loop.index }}" id="check_{{ loop.index }}"
-                                       {% if checklist.get('check_' ~ loop.index) %}checked{% endif %}>
-                                <label class="form-check-label small fw-bold" for="check_{{ loop.index }}">{{ item }}</label>
-                            </div>
-                            <textarea name="note_check_{{ loop.index }}" class="form-control form-control-sm bg-black text-white border-secondary autosave-checklist" 
-                                      rows="1" placeholder="Add observations...">{{ checklist.get('note_check_' ~ loop.index) or '' }}</textarea>
-                        </li>
-                        {% endfor %}
+                    
+                    {% for item in checks %}
+                    <li class="list-group-item bg-transparent text-white border-secondary py-3">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input autosave-checklist" type="checkbox" 
+                                   name="check_{{ loop.index }}" id="check_{{ loop.index }}"
+                                   {% if checklist.get('check_' ~ loop.index|string) %}checked{% endif %}>
+                            <label class="form-check-label small fw-bold" for="check_{{ loop.index }}">{{ item }}</label>
+                        </div>
+                        <textarea name="note_check_{{ loop.index }}" class="form-control form-control-sm bg-black text-white border-secondary autosave-checklist" 
+                                  rows="1" placeholder="Add observations...">{{ checklist.get('note_check_' ~ loop.index|string) or '' }}</textarea>
+                    </li>
+                    {% endfor %}
                 </ul>
             </div>
         </div>
@@ -110,7 +110,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div class="d-flex align-items-center">
-                            <img src="https://media.retroachievements.org/Badge/{{ ach.id }}.png" class="me-3" style="width: 48px;" onerror="this.src='https://media.retroachievements.org/Badge/00000.png'">
+                            <img src="https://media.retroachievements.org/Badge/{{ ach.badge_name }}.png" class="me-3" style="width: 48px;" onerror="this.src='https://media.retroachievements.org/Badge/00000.png'">
                             <div>
                                 <h6 class="mb-0 fw-bold">{{ ach.title }}</h6>
                                 <p class="text-muted small mb-0">{{ ach.description }}</p>
