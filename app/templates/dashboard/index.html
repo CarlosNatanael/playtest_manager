@@ -83,7 +83,7 @@
                         
                         <td>
                             <div class="d-flex align-items-center">
-                                <img src="https://media.retroachievements.org/UserPic/{{ game.developer }}.png" alt="{{ game.developer }}" class="rounded-circle me-2" style="width: 32px; height: 32px; border: 2px solid #ffcc00;" onerror="this.src='https://media.retroachievements.org/UserPic/RetroAchievements.png'">
+                                <img src="https://media.retroachievements.org{{ game.developer_pic }}" alt="{{ game.developer }}" class="rounded-circle me-2" style="width: 32px; height: 32px; border: 2px solid #ffcc00;"onerror="this.src='https://media.retroachievements.org/UserPic/RetroAchievements.png'">
                                 <span>{{ game.developer }} 
                                     {% if game.developer_level == 'Junior' %}
                                         <span class="badge badge-jr ms-1">Jr</span>
