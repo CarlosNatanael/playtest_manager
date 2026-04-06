@@ -7,7 +7,7 @@
     <div class="col-12 d-flex justify-content-between align-items-center">
         <div>
             <h2 class="text-white mb-0">QA Manager Dashboard</h2>
-            <p class="text-muted small mt-1">Visão geral de todos os jogos importados no banco de dados.</p>
+            <p class="text-muted small mt-1">Overview of all games imported into the database.</p>
         </div>
         <a href="{{ url_for('manager.import_game') }}" class="btn btn-primary fw-bold">
             + Import New Game
@@ -40,7 +40,14 @@
                                         <img src="https://media.retroachievements.org{{ game.image_icon }}" alt="Cover" class="rounded me-3 border border-secondary" style="width: 48px; height: 48px; object-fit: cover;" onerror="this.src='https://media.retroachievements.org/Images/00000.png'">
                                         <div>
                                             <span class="text-ra-blue fw-bold d-block">{{ game.title }}</span>
-                                            <span class="badge bg-secondary mt-1">{{ game.console_name }}</span>
+                                            <div class="mt-1 d-flex align-items-center text-muted small">
+                                                <img src="https://static.retroachievements.org/assets/images/system/{{ game.get_console_icon() }}.png" 
+                                                     alt="{{ game.console_name }}" 
+                                                     style="width: 16px; height: 16px; object-fit: contain;" 
+                                                     class="me-1"
+                                                     onerror="this.style.display='none'">
+                                                <span>{{ game.console_name }}</span>
+                                            </div>
                                             {% if game.is_collab %}
                                                 <span class="badge badge-collab ms-1">Collab</span>
                                             {% endif %}

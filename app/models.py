@@ -24,11 +24,74 @@ class Game(db.Model):
     is_collab = db.Column(db.Boolean, default=False)
     image_icon = db.Column(db.String(100), nullable=True)
     console_name = db.Column(db.String(100), nullable=True)
-    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     achievements = db.relationship('Achievement', backref='game', lazy=True, cascade="all, delete-orphan")
     test_sessions = db.relationship('TestSession', backref='game', lazy=True)
+
+def get_console_icon(self):
+    """Traduz o nome do console salvo no banco para o nome da imagem do RA"""
+    mapping = {
+    'Atari 2600': '2600',
+    '32X': '32x',
+    '3DO': '3do',
+    'Nintendo 3DS': '3ds',
+    'Atari 5200': '5200',
+    'Atari 7800': '7800',
+    'IBM PC 8088': '8088',
+    'NEC PC-9800': '9800',
+    'Apple II': 'a2',
+    'Commodore Amiga': 'amiga',
+    'Commodore 64': 'c64',
+    'Philips CD-i': 'cd-i',
+    'CHIP-8': 'chip-8',
+    'Amstrad CPC': 'cpc',
+    'ColecoVision': 'cv',
+    'Sega Dreamcast': 'dc',
+    'DEC Mate': 'decmate',
+    'MS-DOS': 'dos',
+    'Nintendo DS': 'ds',
+    'Nintendo DSi': 'dsi',
+    'Nintendo Famicom Disk System': 'fds',
+    'FM Towns': 'fm-towns',
+    'Game & Watch': 'g&w',
+    'Nintendo Game Boy': 'gb',
+    'Nintendo Game Boy Advance': 'gba',
+    'Nintendo Game Boy Color': 'gbc',
+    'Nintendo GameCube': 'gc',
+    'Sega Game Gear': 'gg',
+    'Intellivision': 'intv',
+    'Atari Jaguar': 'jag',
+    'Atari Lynx': 'lynx',
+    'Sega Mega Drive': 'md',
+    'MSX': 'msx',
+    'Nokia N-Gage': 'n-gage',
+    'Nintendo 64': 'n64',
+    'Nintendo Entertainment System': 'nes',
+    'Neo Geo CD': 'ngcd',
+    'Neo Geo Pocket': 'ngp',
+    'PC-FX': 'pc-fx',
+    'NEC PC Engine': 'pce',
+    'PICO-8': 'pico-8',
+    'Sega Pico': 'pico',
+    'PlayStation': 'ps1',
+    'PlayStation 2': 'ps2',
+    'PlayStation 3': 'ps3',
+    'PlayStation Portable': 'psp',
+    'Sega Saturn': 'sat',
+    'Sega CD': 'scd',
+    'Sega Master System': 'sms',
+    'Super Nintendo Entertainment System': 'snes',
+    'TI-83': 'ti-83',
+    'TIC-80': 'tic-80',
+    'Wii': 'wii',
+    'Wii U': 'wiiu',
+    'WonderSwan': 'ws',
+    'Xbox': 'xbox',
+    'ZX81': 'zx81',
+    'ZX Spectrum': 'zxs'
+    }
+    return mapping.get(self.console_name, 'unknown')
 
 class Achievement(db.Model):
     __tablename__ = 'achievements'
