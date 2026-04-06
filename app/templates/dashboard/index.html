@@ -24,6 +24,9 @@
                                         </div>
                                     </div>
                                     <span class="badge bg-primary ms-2">In Progress</span>
+                                    {% if session.is_collab %}
+                                        <span class="badge bg-info text-dark mb-1">Collab Test</span>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -111,7 +114,7 @@
                         
                         <td>
                             {% if game.is_collab %}
-                                <span class="badge badge-collab">Collab</span>
+                                <span class="badge bg-info text-dark">Collab</span>
                             {% else %}
                                 <span class="badge bg-success">Open (Solo)</span>
                             {% endif %}

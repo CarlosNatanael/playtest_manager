@@ -80,6 +80,7 @@ def autosave(session_id):
     data = request.json
     
     # Atualiza dados globais da sessão
+    if 'emulator' in data: session.emulator = data['emulator']
     if 'core' in data: session.core = data['core']
     if 'hash_used' in data: session.hash_used = data['hash_used']
     if 'is_collab' in data: session.is_collab = data['is_collab']
@@ -96,6 +97,25 @@ def autosave(session_id):
         if 'status' in data: result.trigger_status = data['status']
         if 'note' in data: result.notes = data['note']
         if 'link' in data: result.save_state_link = data['link']
+
+    if 'checklist_data' in data:
+        session.checklist_data = data['checklist_data']
     
     db.session.commit()
     return jsonify({"status": "success"})
+
+@dashboard_bp.route('/abandon/<int:session_id>')
+def abandon_session(session_id):
+    session = TestSession.query.get_or_404(session_id)
+    session.status = 'Abandoned'
+    session.game.status = 'Open' # Libera o jogo para outros
+    db.session.commit()
+    return redirect(url_for('dashboard.index'))
+
+@dashboard_bp.route('/conclude/<int:session_id>')
+def conclude_session(session_id):
+    session = TestSession.query.get_or_404(session_id)
+    session.status = 'Concluded'
+    session.game.status = 'Completed'
+    db.session.commit()
+    return redirect(url_for('dashboard.index'))

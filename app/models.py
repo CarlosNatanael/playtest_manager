@@ -114,14 +114,16 @@ class TestSession(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     is_collab = db.Column(db.Boolean, default=False)
     game_id = db.Column(db.Integer, db.ForeignKey('games.id'), nullable=False)
-    
-    # Condições do teste preenchidas pelo playtester
+
+    emulator = db.Column(db.String(100), nullable=True)
     core = db.Column(db.String(100), nullable=True)
     hash_used = db.Column(db.String(100), nullable=True)
+    is_collab = db.Column(db.Boolean, default=False)
+    checklist_data = db.Column(db.Text, nullable=True)
     
     status = db.Column(db.String(20), default='Active') # Active, Concluded, Abandoned
     started_at = db.Column(db.DateTime, default=datetime.utcnow)
-    expires_at = db.Column(db.DateTime, nullable=True) # Para a regra de 1 semana do SLA
+    expires_at = db.Column(db.DateTime, nullable=True)
     
     # Relacionamento
     results = db.relationship('TestResult', backref='session', lazy=True, cascade="all, delete-orphan")

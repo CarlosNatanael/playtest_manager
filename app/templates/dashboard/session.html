@@ -15,8 +15,8 @@
                             <div class="mt-1 d-flex align-items-center text-muted small">
                                 <img src="https://static.retroachievements.org/assets/images/system/{{ session.game.get_console_icon() }}.png" style="width: 20px;" class="me-2">
                                 <span class="badge bg-secondary me-2">{{ session.game.console_name }}</span>
-                                <span class="small">Tester: <strong class="text-white">{{ session.tester.ra_username }}</strong></span>
                             </div>
+                            <span class="small">Tester: <strong class="text-white">{{ session.tester.ra_username }}</strong></span>
                         </div>
                     </div>
                     <div class="text-end">
@@ -36,15 +36,27 @@
                 <div class="row g-3 bg-dark p-3 rounded border border-secondary">
                     <div class="col-md-3">
                         <label class="form-label text-ra-gold small fw-bold">Emulator</label>
-                        <input type="text" class="form-control form-control-sm bg-black text-white border-secondary" placeholder="e.g. RetroArch">
+                        <input type="text" 
+                               name="emulator" 
+                               class="form-control form-control-sm bg-black text-white border-secondary autosave-global" 
+                               value="{{ session.emulator or '' }}" 
+                               placeholder="e.g. RetroArch">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label text-ra-gold small fw-bold">Core</label>
-                        <input type="text" class="form-control form-control-sm bg-black text-white border-secondary" value="{{ session.core or '' }}" placeholder="e.g. SwanStation">
+                        <input type="text" 
+                               name="core" 
+                               class="form-control form-control-sm bg-black text-white border-secondary autosave-global" 
+                               value="{{ session.core or '' }}" 
+                               placeholder="e.g. SwanStation">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label text-ra-gold small fw-bold">ROM Hash</label>
-                        <input type="text" class="form-control form-control-sm bg-black text-white border-secondary" value="{{ session.hash_used or '' }}" placeholder="Paste the hash used...">
+                        <input type="text" 
+                               name="hash_used" 
+                               class="form-control form-control-sm bg-black text-white border-secondary autosave-global" 
+                               value="{{ session.hash_used or '' }}" 
+                               placeholder="Paste the hash used...">
                     </div>
                 </div>
             </div>
@@ -64,15 +76,19 @@
                         'Test dip switch protection', 'Check/note multiple hashes linked',
                         'Test load with different bios', 'Check "measured" achievements'
                     ] %}
-                    {% for item in checks %}
-                    <li class="list-group-item bg-transparent text-white border-secondary py-3">
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" id="check_{{ loop.index }}">
-                            <label class="form-check-label small fw-bold" for="check_{{ loop.index }}">{{ item }}</label>
-                        </div>
-                        <textarea class="form-control form-control-sm bg-black text-white border-secondary" rows="1" placeholder="Add observations..."></textarea>
-                    </li>
-                    {% endfor %}
+                        {% set checklist = session.checklist_data|from_json if session.checklist_data else {} %}
+                        {% for item in checks %}
+                        <li class="list-group-item bg-transparent text-white border-secondary py-3">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input autosave-checklist" type="checkbox" 
+                                       name="check_{{ loop.index }}" id="check_{{ loop.index }}"
+                                       {% if checklist.get('check_' ~ loop.index) %}checked{% endif %}>
+                                <label class="form-check-label small fw-bold" for="check_{{ loop.index }}">{{ item }}</label>
+                            </div>
+                            <textarea name="note_check_{{ loop.index }}" class="form-control form-control-sm bg-black text-white border-secondary autosave-checklist" 
+                                      rows="1" placeholder="Add observations...">{{ checklist.get('note_check_' ~ loop.index) or '' }}</textarea>
+                        </li>
+                        {% endfor %}
                 </ul>
             </div>
         </div>
@@ -89,39 +105,39 @@
         </div>
     </div>
 
-    {% for ach in session.game.achievements %}
-    <div class="card border-secondary mb-3 achievement-card">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center">
-                    <img src="https://media.retroachievements.org/Badge/{{ ach.id }}.png" class="me-3" style="width: 48px;" onerror="this.src='https://media.retroachievements.org/Badge/00000.png'">
-                    <div>
-                        <h6 class="mb-0 fw-bold">{{ ach.title }}</h6>
-                        <p class="text-muted small mb-0">{{ ach.description }}</p>
+        {% for ach in session.game.achievements %}
+            {% set res = results.get(ach.id) %} <div class="card border-secondary mb-3 achievement-card" data-ach-id="{{ ach.id }}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <img src="https://media.retroachievements.org/Badge/{{ ach.id }}.png" class="me-3" style="width: 48px;" onerror="this.src='https://media.retroachievements.org/Badge/00000.png'">
+                            <div>
+                                <h6 class="mb-0 fw-bold">{{ ach.title }}</h6>
+                                <p class="text-muted small mb-0">{{ ach.description }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check trigger-radio" name="ach_{{ ach.id }}" id="ok_{{ ach.id }}" value="OK" {% if res and res.trigger_status == 'OK' %}checked{% endif %}>
+                            <label class="btn btn-outline-success btn-sm" for="ok_{{ ach.id }}">OK Trigger</label>
+                            
+                            <input type="radio" class="btn-check trigger-radio" name="ach_{{ ach.id }}" id="false_{{ ach.id }}" value="FALSE_TRIGGER" {% if res and res.trigger_status == 'FALSE_TRIGGER' %}checked{% endif %}>
+                            <label class="btn btn-outline-danger btn-sm" for="false_{{ ach.id }}">False Trigger</label>
+                        
+                            <input type="radio" class="btn-check trigger-radio" name="ach_{{ ach.id }}" id="no_{{ ach.id }}" value="NO_TRIGGER" {% if res and res.trigger_status == 'NO_TRIGGER' %}checked{% endif %}>
+                            <label class="btn btn-outline-warning btn-sm" for="no_{{ ach.id }}">No Trigger</label>
+                        </div>
+                    </div>
+                
+                    <div class="evidence-box {% if not res or res.trigger_status == 'OK' %}d-none{% endif %} mt-3 p-3 bg-black rounded border border-danger">
+                        <label class="form-label text-danger small fw-bold">Issue Description</label>
+                        <textarea class="form-control form-control-sm bg-dark text-white border-secondary mb-2 trigger-note" name="note_{{ ach.id }}" rows="2">{{ res.notes if res else '' }}</textarea>
+                        
+                        <label class="form-label text-danger small fw-bold">Save State Link</label>
+                        <input type="text" class="form-control form-control-sm bg-dark text-white border-secondary trigger-link" name="link_{{ ach.id }}" value="{{ res.save_state_link if res else '' }}">
                     </div>
                 </div>
-                
-                <div class="btn-group" role="group">
-                    <input type="radio" class="btn-check trigger-radio" name="ach_{{ ach.id }}" id="ok_{{ ach.id }}" value="OK" autocomplete="off">
-                    <label class="btn btn-outline-success btn-sm" for="ok_{{ ach.id }}">OK Trigger</label>
-                    
-                    <input type="radio" class="btn-check trigger-radio" name="ach_{{ ach.id }}" id="false_{{ ach.id }}" value="FALSE_TRIGGER" autocomplete="off">
-                    <label class="btn btn-outline-danger btn-sm" for="false_{{ ach.id }}">False Trigger</label>
-
-                    <input type="radio" class="btn-check trigger-radio" name="ach_{{ ach.id }}" id="no_{{ ach.id }}" value="NO_TRIGGER" autocomplete="off">
-                    <label class="btn btn-outline-warning btn-sm" for="no_{{ ach.id }}">No Trigger</label>
-                </div>
             </div>
-
-            <div class="evidence-box d-none mt-3 p-3 bg-black rounded border border-danger">
-                <label class="form-label text-danger small fw-bold">Issue Description</label>
-                <textarea class="form-control form-control-sm bg-dark text-white border-secondary mb-2 trigger-note" rows="2" placeholder="Explain the behavior..."></textarea>
-                
-                <label class="form-label text-danger small fw-bold">Save State Link</label>
-                <input type="text" class="form-control form-control-sm bg-dark text-white border-secondary trigger-link" placeholder="Paste link here...">
-            </div>
-        </div>
-    </div>
-    {% endfor %}
+        {% endfor %}
 </div>
 {% endblock %}
