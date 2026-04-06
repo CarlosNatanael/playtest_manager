@@ -3,13 +3,14 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app import db
 from app.models import Game, Achievement
 from app.services.ra_api import fetch_game_and_achievements
+from datetime import datetime
 
 manager_bp = Blueprint('manager', __name__)
 
 @manager_bp.route('/')
 def index():
     games = Game.query.all()
-    return render_template('manager/index.html', games=games)
+    return render_template('manager/index.html', games=games, now=datetime.utcnow())
 
 @manager_bp.route('/import', methods=['GET', 'POST'])
 def import_game():

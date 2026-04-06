@@ -5,25 +5,51 @@
 {% block content %}
 <div class="row mb-4">
     <div class="col-12">
-        <h4 class="mb-3 text-white">Ongoing Tests</h4>
+        <h4 class="mb-3 text-ra-gold">My Ongoing Tests</h4>
         <div class="row g-3">
             {% for session in active_sessions %}
-            <div class="col-md-4">
-                <div class="card bg-dark border-ra-blue h-100">
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm border-primary">
                     <div class="card-body">
-                        <div class="d-flex align-items-center mb-3">
-                            <img src="https://media.retroachievements.org{{ session.game.image_icon }}" class="rounded me-2" style="width: 40px;">
-                            <h6 class="card-title mb-0 text-white">{{ session.game.title }}</h6>
+                        <div class="d-flex mb-3">
+                            <img src="https://media.retroachievements.org{{ session.game.image_icon }}" alt="Cover" class="rounded me-3 border border-secondary" style="width: 64px; height: 64px; object-fit: cover;">
+                            <div class="w-100">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h5 class="card-title mb-1 text-ra-blue fw-bold text-truncate" style="max-width: 150px;">{{ session.game.title }}</h5>
+                                        <div class="d-flex align-items-center text-muted small">
+                                            <img src="https://static.retroachievements.org/assets/images/system/{{ session.game.get_console_icon() }}.png" 
+                                                 style="width: 16px; class="me-1">
+                                            <span>{{ session.game.console_name }}</span>
+                                        </div>
+                                    </div>
+                                    <span class="badge bg-primary ms-2">In Progress</span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="progress mb-3" style="height: 10px;">
-                            <div class="progress-bar bg-info" style="width: 25%"></div>
+                        
+                        {% set total = session.game.achievements|length %}
+                        {% set tested = session.results|length %}
+                        {% set percent = (tested / total * 100)|round if total > 0 else 0 %}
+
+                        <div class="progress mb-2 bg-dark" style="height: 8px;">
+                            <div class="progress-bar bg-info" role="progressbar" style="width: {{ percent }}%;"></div>
                         </div>
-                        <a href="{{ url_for('dashboard.test_session', session_id=session.id) }}" class="btn btn-ra-blue btn-sm w-100 fw-bold">Continue Test</a>
+                        <div class="d-flex justify-content-between small text-muted mb-3">
+                            <span>Progress</span>
+                            <span>{{ tested }}/{{ total }} Achievements</span>
+                        </div>
+                        
+                        <a href="{{ url_for('dashboard.test_session', session_id=session.id) }}" class="btn btn-primary btn-sm w-100 fw-bold">Continue Testing</a>
                     </div>
                 </div>
             </div>
             {% else %}
-            <p class="text-muted small">You don't have any active tests right now. Claim a game below!</p>
+            <div class="col-12">
+                <p class="text-muted border border-secondary border-dashed p-4 rounded text-center">
+                    You don't have any active tests. Claim a game from the Request Board below!
+                </p>
+            </div>
             {% endfor %}
         </div>
     </div>
