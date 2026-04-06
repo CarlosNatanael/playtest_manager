@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}QA Manager Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="text-white mb-0">QA Manager Dashboard</h2>
+            <p class="text-muted small mt-1">Visão geral de todos os jogos importados no banco de dados.</p>
+        </div>
+        <a href="{{ url_for('manager.import_game') }}" class="btn btn-primary fw-bold">
+            + Import New Game
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card border-secondary bg-dark shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0">
+                        <thead class="table-active border-secondary">
+                            <tr>
+                                <th class="px-4">ID</th>
+                                <th>Game</th>
+                                <th>Set Author</th>
+                                <th>Status</th>
+                                <th>Achievements</th>
+                                <th class="text-end px-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for game in games %}
+                            <tr>
+                                <td class="text-muted px-4">#{{ game.id }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center py-2">
+                                        <img src="https://media.retroachievements.org{{ game.image_icon }}" alt="Cover" class="rounded me-3 border border-secondary" style="width: 48px; height: 48px; object-fit: cover;" onerror="this.src='https://media.retroachievements.org/Images/00000.png'">
+                                        <div>
+                                            <span class="text-ra-blue fw-bold d-block">{{ game.title }}</span>
+                                            <span class="badge bg-secondary mt-1">{{ game.console_name }}</span>
+                                            {% if game.is_collab %}
+                                                <span class="badge badge-collab ms-1">Collab</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="https://media.retroachievements.org/UserPic/{{ game.developer }}.png" alt="Dev" class="rounded-circle me-2" style="width: 32px; height: 32px; border: 2px solid #ffcc00;" onerror="this.src='https://media.retroachievements.org/UserPic/RetroAchievements.png'">
+                                        <span>{{ game.developer }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if game.status == 'Open' %}
+                                        <span class="badge bg-success">Open in QA</span>
+                                    {% elif game.status == 'In Progress' %}
+                                        <span class="badge bg-primary">Being Tested</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ game.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ game.achievements|length }}</td>
+                                <td class="text-end px-4">
+                                    <button class="btn btn-outline-light btn-sm" disabled title="Feature em construção">Manage</button>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-5">
+                                    <div class="mb-3">No games in the QA Database yet.</div>
+                                    <a href="{{ url_for('manager.import_game') }}" class="btn btn-outline-primary btn-sm">Import the first game</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

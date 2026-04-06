@@ -16,15 +16,17 @@ class User(db.Model):
 class Game(db.Model):
     __tablename__ = 'games'
     
-    id = db.Column(db.Integer, primary_key=True) # Usaremos o ID oficial do RA
+    id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     developer = db.Column(db.String(100), nullable=False)
-    developer_level = db.Column(db.String(20), nullable=False) # 'Junior' ou 'Full' (Para a regra de prioridade)
-    status = db.Column(db.String(20), default='Open') # Open, In Progress, Waiting CR, Closed
-    is_collab = db.Column(db.Boolean, default=False) # Define se o modo de ajuda está ativo
+    developer_level = db.Column(db.String(20), nullable=False)
+    status = db.Column(db.String(20), default='Open')
+    is_collab = db.Column(db.Boolean, default=False)
+    image_icon = db.Column(db.String(100), nullable=True)
+    console_name = db.Column(db.String(100), nullable=True)
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Relacionamentos
     achievements = db.relationship('Achievement', backref='game', lazy=True, cascade="all, delete-orphan")
     test_sessions = db.relationship('TestSession', backref='game', lazy=True)
 

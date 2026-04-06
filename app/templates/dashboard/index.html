@@ -65,13 +65,14 @@
                     <tr>
                         <td>
                             <div class="d-flex align-items-center">
-                                <img src="https://media.retroachievements.org/Images/00000.png" alt="Cover" class="rounded me-3 border border-secondary" style="width: 48px; height: 48px; object-fit: cover;">
+                                <img src="https://media.retroachievements.org{{ game.image_icon }}" alt="Cover" class="rounded me-3 border border-secondary" style="width: 48px; height: 48px; object-fit: cover;" onerror="this.src='https://media.retroachievements.org/Images/00000.png'">
                                 <div>
                                     <span class="text-ra-blue fw-bold d-block">{{ game.title }}</span>
-                                    <span class="badge bg-secondary mt-1">ID: {{ game.id }}</span>
+                                    <span class="badge bg-secondary mt-1">{{ game.console_name }}</span>
                                 </div>
                             </div>
                         </td>
+                        
                         <td>
                             <div class="d-flex align-items-center">
                                 <img src="https://media.retroachievements.org/UserPic/{{ game.developer }}.png" alt="{{ game.developer }}" class="rounded-circle me-2" style="width: 32px; height: 32px; border: 2px solid #ffcc00;" onerror="this.src='https://media.retroachievements.org/UserPic/RetroAchievements.png'">
@@ -82,6 +83,7 @@
                                 </span>
                             </div>
                         </td>
+                        
                         <td>{{ game.achievements|length }}</td>
                         
                         <td>
@@ -91,6 +93,7 @@
                                 <span class="badge bg-success">Open (Solo)</span>
                             {% endif %}
                         </td>
+                        
                         <td><button class="btn btn-outline-success btn-sm fw-bold">Claim</button></td>
                     </tr>
                     {% else %}
