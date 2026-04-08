@@ -73,11 +73,10 @@ document.addEventListener("DOMContentLoaded", function() {
     if (hashInput && hashStatus) {
         function checkHash(hashValue) {
             if (!hashValue.trim()) {
-                hashStatus.innerHTML = '<i class="bi bi-question-circle text-muted" title="Waiting for hash..."></i>';
+                hashStatus.innerHTML = '<i class="bi bi-question-circle text-muted"></i>';
                 return;
             }
             
-            // Coloca um ícone a girar a dizer "a carregar"
             hashStatus.innerHTML = '<div class="spinner-border spinner-border-sm text-info" role="status"></div>';
             
             fetch(`/dashboard/session/validate_hash/${sessionId}`, {
@@ -85,32 +84,36 @@ document.addEventListener("DOMContentLoaded", function() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ hash: hashValue })
             })
-            .then(res => res.json())
+            .then(res => {
+                if(!res.ok) throw new Error("Erro de comunicação com o servidor");
+                return res.json();
+            })
             .then(data => {
+                console.log("Resposta da API Hash:", data); // Olhe o F12 no navegador!
+                
                 if (data.empty) {
                     hashStatus.innerHTML = '<i class="bi bi-question-circle text-muted"></i>';
-                } else if (data.valid) {
-                    hashStatus.innerHTML = '<i class="bi bi-check-circle-fill text-success fs-5" title="Valid Hash!"></i>';
+                } else if (data.valid === true) {
+                    // Texto Verde + Ícone
+                    hashStatus.innerHTML = '<span class="text-success fw-bold me-1">OK</span><i class="bi bi-check-lg text-success"></i>';
                 } else {
-                    hashStatus.innerHTML = '<i class="bi bi-x-circle-fill text-danger fs-5" title="Hash not linked to this game!"></i>';
+                    // Texto Vermelho + Ícone
+                    hashStatus.innerHTML = '<span class="text-danger fw-bold me-1">X</span><i class="bi bi-x-lg text-danger"></i>';
                 }
             })
-            .catch(() => {
-                hashStatus.innerHTML = '<i class="bi bi-exclamation-triangle-fill text-warning fs-5" title="API Error"></i>';
+            .catch(err => {
+                console.error("Erro no Javascript:", err);
+                // Texto Amarelo
+                hashStatus.innerHTML = '<span class="text-warning fw-bold small">ERR</span>';
             });
         }
 
-        // Valida assim que a página abre, caso já haja um hash salvo
         checkHash(hashInput.value);
 
-        // Valida quando o tester cola ou escreve
         let typingTimer;
         hashInput.addEventListener('input', function() {
             clearTimeout(typingTimer);
-            // Aguarda 800ms depois de parar de digitar para não bombardear a API
-            typingTimer = setTimeout(() => {
-                checkHash(this.value);
-            }, 800); 
+            typingTimer = setTimeout(() => { checkHash(this.value); }, 800); 
         });
     }
 

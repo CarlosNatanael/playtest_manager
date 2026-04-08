@@ -192,12 +192,16 @@ def conclude_session(session_id):
 
 @dashboard_bp.route('/session/validate_hash/<int:session_id>', methods=['POST'])
 def validate_hash(session_id):
-    test_session = TestSession.query.get_or_404(session_id)
-    data = request.json
-    hash_to_check = data.get('hash', '')
-    
-    if not hash_to_check:
-        return jsonify({'valid': False, 'empty': True})
+    try:
+        test_session = TestSession.query.get_or_404(session_id)
+        data = request.json
+        hash_to_check = data.get('hash', '')
         
-    is_valid = validate_game_hash(test_session.game_id, hash_to_check)
-    return jsonify({'valid': is_valid, 'empty': False})
+        if not hash_to_check:
+            return jsonify({'valid': False, 'empty': True})
+            
+        is_valid = validate_game_hash(test_session.game_id, hash_to_check)
+        return jsonify({'valid': is_valid, 'empty': False})
+    except Exception as e:
+        print(f"ERRO NO VALIDADOR DE HASH: {e}") # Vai aparecer no seu terminal!
+        return jsonify({'error': str(e)}), 500
