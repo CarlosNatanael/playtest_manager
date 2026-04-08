@@ -3,10 +3,63 @@
 {% block title %}Session: {{ test_session.game.title }}{% endblock %}
 
 {% block content %}
+{% if test_session.game.is_collab and collab_partners %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-info bg-dark">
+        <div class="card-header bg-info text-dark fw-bold d-flex justify-content-between align-items-center py-2">
+            <span><i class="bi bi-people-fill me-2"></i>Collab Team Status</span>
+            
+            {% if is_owner %}
+                <div class="form-check form-switch m-0" title="Stop accepting new testers">
+                    <input class="form-check-input bg-dark border-secondary autosave-global" 
+                           type="checkbox" 
+                           role="switch" 
+                           id="lockCollab" 
+                           name="collab_locked" 
+                           {% if test_session.game.collab_locked %}checked{% endif %}>
+                    <label class="form-check-label text-dark small fw-bold" for="lockCollab">
+                        <i class="bi bi-lock-fill"></i> Lock Team
+                    </label>
+                </div>
+            {% else %}
+                {% if test_session.game.collab_locked %}
+                    <span class="badge bg-dark text-white border border-secondary"><i class="bi bi-lock-fill"></i> Team Locked</span>
+                {% endif %}
+            {% endif %}
+        </div>
+            <div class="card-body p-3">
+                <div class="d-flex flex-wrap gap-3">
+                    {% for partner in collab_partners %}
+                        {% set p_total = partner.game.achievements|length %}
+                        {% set p_tested = partner.results|length %}
+                        
+                        <div class="bg-black border border-secondary rounded p-2 d-flex align-items-center" style="min-width: 200px;">
+                            <div class="me-3">
+                                <i class="bi bi-person-circle fs-3 text-ra-blue"></i>
+                            </div>
+                            <div>
+                                <strong class="text-white d-block">{{ partner.tester.ra_username }}</strong>
+                                <span class="badge {{ 'bg-success' if partner.status == 'Concluded' else 'bg-warning text-dark' }} mb-1" style="font-size: 0.65rem;">
+                                    {{ partner.status }}
+                                </span>
+                                <div class="small text-muted" style="font-size: 0.75rem;">
+                                    Progress: <span class="text-info fw-bold">{{ p_tested }}/{{ p_total }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 <div class="row mb-4">
     <div class="col-12">
         <div class="card border-secondary">
             <div class="card-body p-4">
+
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <div class="d-flex align-items-center">
                         <img src="https://media.retroachievements.org{{ test_session.game.image_icon }}" class="rounded me-3 border border-secondary" style="width: 80px; height: 80px; object-fit: cover;">
@@ -105,13 +158,19 @@
 <div class="col-lg-8">
     <h4 class="mb-3 text-white">Achievements ({{ test_session.game.achievements|length }})</h4>
 
-    <div class="col-md-2 d-flex align-items-end pb-1">
-        <div class="form-check form-switch">
-            <input class="form-check-input" type="checkbox" name="is_collab" id="is_collab" 
-                   {% if test_session.is_collab %}checked{% endif %}>
-            <label class="form-check-label text-ra-gold small fw-bold" for="is_collab">Collab Test?</label>
+        <div class="col-md-3 d-flex align-items-end pb-1">
+            {% if is_owner %}
+                <div class="form-check form-switch">
+                    <input class="form-check-input autosave-global" type="checkbox" name="is_collab" id="is_collab" 
+                           {% if test_session.game.is_collab %}checked{% endif %}>
+                    <label class="form-check-label text-ra-gold small fw-bold" for="is_collab">Collab Test?</label>
+                </div>
+            {% else %}
+                {% if test_session.game.is_collab %}
+                    <span class="badge bg-info text-dark fw-bold"><i class="bi bi-people-fill"></i> Collab Active</span>
+                {% endif %}
+            {% endif %}
         </div>
-    </div>
 
         {% for ach in test_session.game.achievements %}
             {% set res = results.get(ach.id) %} <div class="card border-secondary mb-3 achievement-card" data-ach-id="{{ ach.id }}">

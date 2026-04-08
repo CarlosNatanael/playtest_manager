@@ -36,6 +36,7 @@ def review_session(session_id):
     test_session = TestSession.query.get_or_404(session_id)
     results = TestResult.query.filter_by(session_id=session_id).all()
 
+    from app.models import GameLog
     game_logs = GameLog.query.filter_by(game_id=test_session.game_id).order_by(GameLog.timestamp.desc()).all()
     
     checklist_dict = {}
@@ -44,12 +45,19 @@ def review_session(session_id):
             checklist_dict = json.loads(test_session.checklist_data)
         except:
             pass
+    collab_partners = []
+    if test_session.game.is_collab:
+        collab_partners = TestSession.query.filter(
+            TestSession.game_id == test_session.game_id,
+            TestSession.id != test_session.id
+        ).all()
 
     return render_template('manager/session_view.html', 
                            test_session=test_session,
                            results=results,
                            checklist=checklist_dict,
-                           logs=game_logs)
+                           logs=game_logs,
+                           collab_partners=collab_partners)
 
 @manager_bp.route('/import', methods=['GET', 'POST'])
 def import_game():
@@ -170,5 +178,5 @@ def delete_game(game_id):
     title = game.title
     db.session.delete(game)
     db.session.commit()
-    flash(f"Game '{title}' removed from database.", "success")
+    flash(f"Game '{title}' has been removed from the database.", "success")
     return redirect(url_for('manager.index'))

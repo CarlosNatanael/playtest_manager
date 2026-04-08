@@ -7,16 +7,23 @@ dashboard_bp = Blueprint('dashboard', __name__)
 
 @dashboard_bp.route('/')
 def index():
-    open_games = Game.query.filter_by(status='Open').all()
     user_id = session.get('user_id')
     if not user_id:
         return redirect(url_for('auth.login'))
-        
+
+    open_games = Game.query.filter(
+        db.or_(
+            Game.status == 'Open',
+            db.and_(Game.status == 'In Progress', Game.is_collab == True, Game.collab_locked == False)
+        )
+    ).all()
     active_sessions = TestSession.query.filter_by(user_id=user_id, status='Active').all()
+    active_game_ids = [s.game_id for s in active_sessions]
     
     return render_template('dashboard/index.html', 
                            open_games=open_games, 
-                           active_sessions=active_sessions)
+                           active_sessions=active_sessions,
+                           active_game_ids=active_game_ids)
 
 @dashboard_bp.route('/view_game/<int:game_id>')
 def view_game(game_id):
@@ -26,15 +33,27 @@ def view_game(game_id):
 @dashboard_bp.route('/claim/<int:game_id>')
 def claim_game(game_id):
     game = Game.query.get_or_404(game_id)
-
+    
     user_id = session.get('user_id')
     if not user_id:
         flash("You must be logged in to claim a game.", "danger")
         return redirect(url_for('auth.login'))
 
-    if game.status != 'Open':
-        flash("This game has already been claimed by another tester.", "warning")
+    existing = TestSession.query.filter_by(user_id=user_id, game_id=game.id, status='Active').first()
+    if existing:
+        flash("You are already testing this game!", "info")
+        return redirect(url_for('dashboard.test_session', session_id=existing.id))
+    
+    active_count = TestSession.query.filter_by(game_id=game.id, status='Active').count()
+    if game.is_collab and active_count >= 4:
+        flash("This Collab has reached its maximum capacity (4 Testers).", "warning")
         return redirect(url_for('dashboard.index'))
+
+    if game.status != 'Open' and not (game.is_collab and not game.collab_locked):
+        flash("This test is currently closed to new participants.", "warning")
+        return redirect(url_for('dashboard.index'))
+    
+
     new_session = TestSession(
         user_id=user_id,
         game_id=game.id,
@@ -42,13 +61,16 @@ def claim_game(game_id):
         started_at=datetime.utcnow(),
         expires_at=datetime.utcnow() + timedelta(days=7)
     )
+    
     game.status = 'In Progress'
-    db.session.add(new_session)
+
     log = GameLog(game_id=game.id, username=session.get('username'), action="Claimed the game for testing")
     db.session.add(log)
+    
+    db.session.add(new_session)
     db.session.commit()
     
-    flash(f"You have started the {game.title} test!", "success")
+    flash(f"You have started testing {game.title}!", "success")
     return redirect(url_for('dashboard.test_session', session_id=new_session.id))
 
 @dashboard_bp.route('/session/<int:session_id>')
@@ -63,32 +85,43 @@ def test_session(session_id):
         except:
             pass
 
-    return render_template('dashboard/session.html', 
+    collab_partners = []
+    if test_session.game.is_collab:
+        collab_partners = TestSession.query.filter(
+            TestSession.game_id == test_session.game_id,
+            TestSession.id != test_session.id
+        ).all()
+
+    first_session = TestSession.query.filter_by(game_id=test_session.game_id).order_by(TestSession.id.asc()).first()
+    is_owner = first_session and (first_session.user_id == session.get('user_id'))
+
+    return render_template('dashboard/session.html',
                            test_session=test_session,
                            results=results_map, 
-                           checklist=checklist_dict)
+                           checklist=checklist_dict,
+                           collab_partners=collab_partners,
+                           is_owner=is_owner)
 
 @dashboard_bp.route('/session/save/<int:session_id>', methods=['POST'])
 def save_session(session_id):
-    session = TestSession.query.get_or_404(session_id)
+    test_session = TestSession.query.get_or_404(session_id)
     data = request.form
     
-    # Salva dados do cabeçalho
-    session.core = data.get('core')
-    session.hash_used = data.get('hash_used')
+    # Save header data
+    test_session.core = data.get('core')
+    test_session.hash_used = data.get('hash_used')
     
-    # Processa cada conquista
-    for ach in session.game.achievements:
+    # Process each achievement
+    for ach in test_session.game.achievements:
         status = data.get(f'ach_{ach.id}')
         if status:
-            # Busca resultado existente ou cria novo
             result = TestResult.query.filter_by(
-                session_id=session.id, 
+                session_id=test_session.id, 
                 achievement_id=ach.id
             ).first()
             
             if not result:
-                result = TestResult(session_id=session.id, achievement_id=ach.id)
+                result = TestResult(session_id=test_session.id, achievement_id=ach.id)
                 db.session.add(result)
             
             result.trigger_status = status
@@ -100,23 +133,25 @@ def save_session(session_id):
 
 @dashboard_bp.route('/session/autosave/<int:session_id>', methods=['POST'])
 def autosave(session_id):
-    session = TestSession.query.get_or_404(session_id)
+    test_session = TestSession.query.get_or_404(session_id) 
     data = request.json
     
-    # Atualiza dados globais da sessão
-    if 'emulator' in data: session.emulator = data['emulator']
-    if 'core' in data: session.core = data['core']
-    if 'hash_used' in data: session.hash_used = data['hash_used']
-    if 'is_collab' in data: session.is_collab = data['is_collab']
-    if 'set_impressions' in data: session.set_impressions = data['set_impressions']
+    if 'emulator' in data: test_session.emulator = data['emulator']
+    if 'core' in data: test_session.core = data['core']
+    if 'hash_used' in data: test_session.hash_used = data['hash_used']
+    if 'set_impressions' in data: test_session.set_impressions = data['set_impressions']
+    if 'collab_locked' in data: test_session.game.collab_locked = data['collab_locked']
     
-    # Atualiza ou cria o resultado de uma conquista específica
+    if 'is_collab' in data: 
+        test_session.is_collab = data['is_collab']
+        test_session.game.is_collab = data['is_collab'] 
+    
     if 'achievement_id' in data:
         ach_id = data['achievement_id']
-        result = TestResult.query.filter_by(session_id=session.id, achievement_id=ach_id).first()
+        result = TestResult.query.filter_by(session_id=test_session.id, achievement_id=ach_id).first()
         
         if not result:
-            result = TestResult(session_id=session.id, achievement_id=ach_id)
+            result = TestResult(session_id=test_session.id, achievement_id=ach_id)
             db.session.add(result)
         
         if 'status' in data: result.trigger_status = data['status']
@@ -124,7 +159,7 @@ def autosave(session_id):
         if 'link' in data: result.save_state_link = data['link']
 
     if 'checklist_data' in data:
-        session.checklist_data = data['checklist_data']
+        test_session.checklist_data = data['checklist_data']
     
     db.session.commit()
     return jsonify({"status": "success"})
@@ -133,9 +168,10 @@ def autosave(session_id):
 def abandon_session(session_id):
     test_session = TestSession.query.get_or_404(session_id)
     test_session.status = 'Abandoned'
-    test_session.game.status = 'Open' # Libera o jogo para outros
+    test_session.game.status = 'Open'
     log = GameLog(game_id=test_session.game_id, username=session.get('username'), action="Abandoned the test")
     db.session.add(log)
+    db.session.commit() # Adicionei o commit aqui que faltava no original
     
     flash("You have abandoned the test. The game is back on the Request Board.", "warning")
     return redirect(url_for('dashboard.index'))
@@ -149,6 +185,6 @@ def conclude_session(session_id):
     log = GameLog(game_id=test_session.game_id, username=session.get('username'), action="Concluded the test and submitted report")
     db.session.add(log)
     db.session.commit()
-    
+
     flash("Test successfully concluded! The report was sent to the Manager.", "success")
     return redirect(url_for('dashboard.index'))

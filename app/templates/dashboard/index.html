@@ -125,10 +125,19 @@
                                    class="btn btn-outline-info btn-sm fw-bold">
                                    View
                                 </a>
-                                <a href="{{ url_for('dashboard.claim_game', game_id=game.id) }}" 
-                                   class="btn btn-outline-success btn-sm fw-bold">
-                                   Claim
-                                </a>
+                                
+                                {% if game.id in active_game_ids %}
+                                    {% set user_session = active_sessions | selectattr("game_id", "equalto", game.id) | first %}
+                                    <a href="{{ url_for('dashboard.test_session', session_id=user_session.id) }}" 
+                                       class="btn btn-primary btn-sm fw-bold">
+                                       Continue
+                                    </a>
+                                {% else %}
+                                    <a href="{{ url_for('dashboard.claim_game', game_id=game.id) }}" 
+                                       class="btn btn-outline-success btn-sm fw-bold">
+                                       Claim
+                                    </a>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>

@@ -7,10 +7,19 @@
     </button>
     <h2 class="text-white">Reviewing: {{ test_session.game.title }}</h2>
     <div class="text-muted">
-        Tester: <span class="text-ra-blue fw-bold">{{ test_session.tester.ra_username }}</span> | 
-        Started: {{ test_session.started_at.strftime('%d/%m/%Y') }}
-        {% if test_session.concluded_at %}
-            | Concluded: <span class="text-success fw-bold">{{ test_session.concluded_at.strftime('%d/%m/%Y %H:%M') }}</span>
+        Tester: <span class="text-ra-blue fw-bold">{{ test_session.tester.ra_username }}</span> 
+
+        {% if test_session.game.is_collab and collab_partners %}
+            <span class="text-muted small">
+                (Collab with: 
+                {% for p in collab_partners %}
+                    <strong class="text-info">{{ p.tester.ra_username }}</strong>{% if not loop.last %}, {% endif %}
+                {% endfor %})
+            </span>
+        {% endif %}
+        | Started: {{ test_session.started_at.strftime('%d/%m/%Y') }}
+        {% if test_session.game.is_collab %}
+            | <span class="badge bg-info text-dark ms-2 fw-bold"><i class="bi bi-people-fill"></i> Collab</span>
         {% endif %}
     </div>
 </div>

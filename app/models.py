@@ -23,6 +23,7 @@ class Game(db.Model):
     developer_pic = db.Column(db.String(200), nullable=True)
     developer_level = db.Column(db.String(20), nullable=False)
     status = db.Column(db.String(20), default='Open')
+    collab_locked = db.Column(db.Boolean, default=False)
     is_collab = db.Column(db.Boolean, default=False)
     image_icon = db.Column(db.String(100), nullable=True)
     console_name = db.Column(db.String(100), nullable=True)
