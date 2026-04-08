@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, session
 from app.models import Game, TestSession, db, TestResult, GameLog
+from app.services.ra_api import validate_game_hash
 from datetime import datetime, timedelta
 import json
 
@@ -188,3 +189,15 @@ def conclude_session(session_id):
 
     flash("Test successfully concluded! The report was sent to the Manager.", "success")
     return redirect(url_for('dashboard.index'))
+
+@dashboard_bp.route('/session/validate_hash/<int:session_id>', methods=['POST'])
+def validate_hash(session_id):
+    test_session = TestSession.query.get_or_404(session_id)
+    data = request.json
+    hash_to_check = data.get('hash', '')
+    
+    if not hash_to_check:
+        return jsonify({'valid': False, 'empty': True})
+        
+    is_valid = validate_game_hash(test_session.game_id, hash_to_check)
+    return jsonify({'valid': is_valid, 'empty': False})

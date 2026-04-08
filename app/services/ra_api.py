@@ -72,3 +72,27 @@ def fetch_game_and_achievements(game_id, access_token=None):
         
     except requests.exceptions.RequestException as e:
         return None, f"Erro de comunicação: {str(e)}"
+    
+def validate_game_hash(game_id, hash_to_check):
+    url = "https://retroachievements.org/API/API_GetGameHashes.php"
+    params = {
+        "z": current_app.config.get('RA_USERNAME'),
+        "y": current_app.config.get('RA_API_KEY'),
+        "i": game_id
+    }
+    try:
+        res = requests.get(url, params=params)
+        data = res.json()
+        
+        results = data.get('Results', [])
+        valid_hashes = []
+        
+        for item in results:
+            if isinstance(item, dict) and 'MD5' in item:
+                valid_hashes.append(item['MD5'].lower())
+            elif isinstance(item, str):
+                valid_hashes.append(item.lower())
+
+        return hash_to_check.lower().strip() in valid_hashes
+    except:
+        return False

@@ -117,11 +117,17 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label text-ra-gold small fw-bold">ROM Hash</label>
-                            <input type="text" 
-                                   name="hash_used" 
-                                   class="form-control form-control-sm bg-black text-white border-secondary autosave-global" 
-                                   value="{{ test_session.hash_used or '' }}" 
-                                   placeholder="Paste the hash used...">
+                            <div class="input-group input-group-sm">
+                                <input type="text" 
+                                       name="hash_used" 
+                                       id="hash_input"
+                                       class="form-control bg-black text-white border-secondary autosave-global" 
+                                       value="{{ test_session.hash_used or '' }}" 
+                                       placeholder="Paste the hash used...">
+                                <span class="input-group-text bg-black border-secondary" id="hash_status" style="width: 45px; justify-content: center;">
+                                    <i class="bi bi-question-circle text-muted"></i>
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
