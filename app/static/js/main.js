@@ -51,4 +51,13 @@ document.addEventListener("DOMContentLoaded", function() {
             sendData({ checklist_data: JSON.stringify(payload) });
         });
     });
+
+    // Monitorar o Switch de Collab
+    const collabSwitch = document.getElementById('is_collab');
+    if (collabSwitch) {
+        collabSwitch.addEventListener('change', function() {
+            sendData({ is_collab: this.checked });
+        });
+    }
+
 });

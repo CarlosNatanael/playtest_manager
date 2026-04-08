@@ -59,7 +59,8 @@ def import_game():
                 game_id=new_game.id,
                 title=ach_data['title'],
                 description=ach_data['description'],
-                points=ach_data['points']
+                points=ach_data['points'],
+                badge_name=ach_data.get('badge_name')
             )
             db.session.add(new_ach)
         db.session.commit()
