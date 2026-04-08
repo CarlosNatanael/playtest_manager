@@ -10,7 +10,14 @@ manager_bp = Blueprint('manager', __name__)
 @manager_bp.route('/')
 def index():
     games = Game.query.all()
-    return render_template('manager/index.html', games=games, now=datetime.utcnow())
+    active_sessions = TestSession.query.filter_by(status='Active').all()
+
+    active_sessions_map = {s.game_id: s for s in active_sessions}
+
+    return render_template('manager/index.html', 
+                           games=games, 
+                           active_sessions_map=active_sessions_map,
+                           now=datetime.utcnow())
 
 @manager_bp.route('/review/<int:session_id>')
 def review_session(session_id):

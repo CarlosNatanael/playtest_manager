@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, session
 from app.models import Game, TestSession, db, TestResult
 from datetime import datetime, timedelta
 import json
@@ -8,7 +8,11 @@ dashboard_bp = Blueprint('dashboard', __name__)
 @dashboard_bp.route('/')
 def index():
     open_games = Game.query.filter_by(status='Open').all()
-    active_sessions = TestSession.query.filter_by(user_id=1, status='Active').all()
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('auth.login'))
+        
+    active_sessions = TestSession.query.filter_by(user_id=user_id, status='Active').all()
     
     return render_template('dashboard/index.html', 
                            open_games=open_games, 
@@ -22,11 +26,17 @@ def view_game(game_id):
 @dashboard_bp.route('/claim/<int:game_id>')
 def claim_game(game_id):
     game = Game.query.get_or_404(game_id)
+
+    user_id = session.get('user_id')
+    if not user_id:
+        flash("You must be logged in to claim a game.", "danger")
+        return redirect(url_for('auth.login'))
+
     if game.status != 'Open':
-        flash("Este jogo já foi reivindicado por outro tester.", "warning")
+        flash("This game has already been claimed by another tester.", "warning")
         return redirect(url_for('dashboard.index'))
     new_session = TestSession(
-        user_id=1,
+        user_id=user_id,
         game_id=game.id,
         status='Active',
         started_at=datetime.utcnow(),
@@ -36,7 +46,7 @@ def claim_game(game_id):
     db.session.add(new_session)
     db.session.commit()
     
-    flash(f"Você iniciou o teste de {game.title}!", "success")
+    flash(f"You have started the {game.title} test!", "success")
     return redirect(url_for('dashboard.test_session', session_id=new_session.id))
 
 @dashboard_bp.route('/session/<int:session_id>')

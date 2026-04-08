@@ -4,9 +4,9 @@
     <a href="{{ url_for('manager.index') }}" class="btn btn-outline-secondary btn-sm mb-3">← Back to Manager</a>
     <h2 class="text-white">Reviewing: {{ test_session.game.title }}</h2>
     <div class="text-muted">
-        Tester: <span class="text-ra-blue fw-bold">{{ session.tester.ra_username }}</span> | 
-        Started: {{ session.started_at.strftime('%d/%m/%Y') }}
-        {% if session.is_collab %}
+        Tester: <span class="text-ra-blue fw-bold">{{ test_session.tester.ra_username }}</span> | 
+        Started: {{ test_session.started_at.strftime('%d/%m/%Y') }}
+        {% if test_session.is_collab %}
             | <span class="badge bg-info text-dark ms-2">Collab Test</span>
         {% endif %}
     </div>
@@ -18,15 +18,15 @@
         <div class="row">
             <div class="col-md-4">
                 <strong class="text-ra-gold small">Emulator:</strong>
-                <div class="text-white">{{ session.emulator or 'Not specified' }}</div>
+                <div class="text-white">{{ test_session.emulator or 'Not specified' }}</div>
             </div>
             <div class="col-md-4">
                 <strong class="text-ra-gold small">Core:</strong>
-                <div class="text-white">{{ session.core or 'Not specified' }}</div>
+                <div class="text-white">{{ test_session.core or 'Not specified' }}</div>
             </div>
             <div class="col-md-4">
                 <strong class="text-ra-gold small">ROM Hash:</strong>
-                <div class="text-white" style="word-break: break-all;">{{ session.hash_used or 'Not specified' }}</div>
+                <div class="text-white" style="word-break: break-all;">{{ test_session.hash_used or 'Not specified' }}</div>
             </div>
         </div>
     </div>
@@ -99,8 +99,8 @@
         <h4 class="text-ra-gold mt-5 mb-3">Set Impressions / Final Assessment</h4>
         <div class="card border-secondary bg-black mb-5">
             <div class="card-body">
-                {% if session.set_impressions %}
-                    <p class="text-white mb-0" style="white-space: pre-wrap;">{{ session.set_impressions }}</p>
+                {% if test_session.set_impressions %}
+                    <p class="text-white mb-0" style="white-space: pre-wrap;">{{ test_session.set_impressions }}</p>
                 {% else %}
                     <p class="text-muted fst-italic mb-0">The tester hasn't provided their final impressions yet.</p>
                 {% endif %}

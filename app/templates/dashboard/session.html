@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Session: {{ session.game.title }}{% endblock %}
+{% block title %}Session: {{ test_session.game.title }}{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
@@ -9,14 +9,14 @@
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <div class="d-flex align-items-center">
-                        <img src="https://media.retroachievements.org{{ session.game.image_icon }}" class="rounded me-3 border border-secondary" style="width: 80px; height: 80px; object-fit: cover;">
+                        <img src="https://media.retroachievements.org{{ test_session.game.image_icon }}" class="rounded me-3 border border-secondary" style="width: 80px; height: 80px; object-fit: cover;">
                         <div>
-                            <h2 class="mb-1 text-ra-blue fw-bold">{{ session.game.title }}</h2>
+                            <h2 class="mb-1 text-ra-blue fw-bold">{{ test_session.game.title }}</h2>
                             <div class="mt-1 d-flex align-items-center text-muted small">
-                                <img src="https://static.retroachievements.org/assets/images/system/{{ session.game.get_console_icon() }}.png" style="width: 20px;" class="me-2">
-                                <span class="badge bg-secondary me-2">{{ session.game.console_name }}</span>
+                                <img src="https://static.retroachievements.org/assets/images/system/{{ test_session.game.get_console_icon() }}.png" style="width: 20px;" class="me-2">
+                                <span class="badge bg-secondary me-2">{{ test_session.game.console_name }}</span>
                             </div>
-                            <span class="small">Tester: <strong class="text-white">{{ session.tester.ra_username }}</strong></span>
+                            <span class="small">Tester: <strong class="text-white">{{ test_session.tester.ra_username }}</strong></span>
                         </div>
                     </div>
                     <div class="text-end">
@@ -95,17 +95,17 @@
     </div>
 
 <div class="col-lg-8">
-    <h4 class="mb-3 text-white">Achievements ({{ session.game.achievements|length }})</h4>
+    <h4 class="mb-3 text-white">Achievements ({{ test_session.game.achievements|length }})</h4>
 
     <div class="col-md-2 d-flex align-items-end pb-1">
         <div class="form-check form-switch">
             <input class="form-check-input" type="checkbox" name="is_collab" id="is_collab" 
-                   {% if session.is_collab %}checked{% endif %}>
+                   {% if test_session.is_collab %}checked{% endif %}>
             <label class="form-check-label text-ra-gold small fw-bold" for="is_collab">Collab Test?</label>
         </div>
     </div>
 
-        {% for ach in session.game.achievements %}
+        {% for ach in test_session.game.achievements %}
             {% set res = results.get(ach.id) %} <div class="card border-secondary mb-3 achievement-card" data-ach-id="{{ ach.id }}">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
@@ -148,7 +148,7 @@
                 <textarea name="set_impressions" 
                           class="form-control bg-black text-white border-0 p-3" 
                           rows="6" 
-                          placeholder="Write your general thoughts on the set, overall difficulty, recurring issues, or feedback for the developer...">{{ session.set_impressions or '' }}</textarea>
+                          placeholder="Write your general thoughts on the set, overall difficulty, recurring issues, or feedback for the developer...">{{ test_session.set_impressions or '' }}</textarea>
             </div>
         </div>
 </div>
