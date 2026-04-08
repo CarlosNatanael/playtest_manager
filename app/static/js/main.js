@@ -1,5 +1,3 @@
-// Remova o código que estava isolado fora e use apenas esta estrutura:
-
 document.addEventListener("DOMContentLoaded", function() {
     const sessionId = window.location.pathname.split('/').pop();
 
@@ -11,7 +9,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }).then(res => console.log("Auto-saved:", payload));
     }
 
-    // 1. Campos Globais
+    // 1. Campos Globais (Textos)
     document.querySelectorAll('input[type="text"], textarea').forEach(el => {
         el.addEventListener('blur', function() { 
             const achCard = this.closest('.achievement-card');
@@ -41,7 +39,7 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
 
-    // 3. O CHECKLIST AGORA DENTRO DO BLOCO PRINCIPAL
+    // 3. Checklist
     document.querySelectorAll('.autosave-checklist').forEach(el => {
         el.addEventListener('change', function() {
             const payload = {};
@@ -52,11 +50,19 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
 
-    // Monitorar o Switch de Collab
+    // 4. Monitorar o Switch de Collab
     const collabSwitch = document.getElementById('is_collab');
     if (collabSwitch) {
         collabSwitch.addEventListener('change', function() {
             sendData({ is_collab: this.checked });
+        });
+    }
+
+    // 5. NOVO: Monitorar o Cadeado (Lock Team)
+    const lockCollabSwitch = document.getElementById('lockCollab');
+    if (lockCollabSwitch) {
+        lockCollabSwitch.addEventListener('change', function() {
+            sendData({ collab_locked: this.checked });
         });
     }
 
