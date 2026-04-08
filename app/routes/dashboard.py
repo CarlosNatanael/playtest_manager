@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, session
-from app.models import Game, TestSession, db, TestResult
+from app.models import Game, TestSession, db, TestResult, GameLog
 from datetime import datetime, timedelta
 import json
 
@@ -44,6 +44,8 @@ def claim_game(game_id):
     )
     game.status = 'In Progress'
     db.session.add(new_session)
+    log = GameLog(game_id=game.id, username=session.get('username'), action="Claimed the game for testing")
+    db.session.add(log)
     db.session.commit()
     
     flash(f"You have started the {game.title} test!", "success")
@@ -132,7 +134,8 @@ def abandon_session(session_id):
     test_session = TestSession.query.get_or_404(session_id)
     test_session.status = 'Abandoned'
     test_session.game.status = 'Open' # Libera o jogo para outros
-    db.session.commit()
+    log = GameLog(game_id=test_session.game_id, username=session.get('username'), action="Abandoned the test")
+    db.session.add(log)
     
     flash("You have abandoned the test. The game is back on the Request Board.", "warning")
     return redirect(url_for('dashboard.index'))
@@ -143,7 +146,9 @@ def conclude_session(session_id):
     test_session.status = 'Concluded'
     test_session.game.status = 'Completed'
     test_session.concluded_at = datetime.utcnow() 
-    
+    log = GameLog(game_id=test_session.game_id, username=session.get('username'), action="Concluded the test and submitted report")
+    db.session.add(log)
     db.session.commit()
+    
     flash("Test successfully concluded! The report was sent to the Manager.", "success")
     return redirect(url_for('dashboard.index'))

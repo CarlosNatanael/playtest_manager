@@ -139,10 +139,9 @@ class TestResult(db.Model):
     session_id = db.Column(db.Integer, db.ForeignKey('test_sessions.id'), nullable=False)
     achievement_id = db.Column(db.Integer, db.ForeignKey('achievements.id'), nullable=False)
     trigger_status = db.Column(db.String(20), nullable=True)
-    notes = db.Column(db.Text, nullable=True) # Para salvar as "Issue Descriptions"
+    notes = db.Column(db.Text, nullable=True)
     save_state_link = db.Column(db.String(500), nullable=True)
     
-    # Estados: None (não testado), OK, FALSE_TRIGGER, NO_TRIGGER, OK_AFTER_RETEST
     trigger_status = db.Column(db.String(20), nullable=True) 
     notes = db.Column(db.Text, nullable=True)
     save_state_link = db.Column(db.String(500), nullable=True)
@@ -160,3 +159,13 @@ def atualizar_cargo_do_usuario(user, permissoes_do_ra):
     else:
         user.role = 'bloqueado'  # Usuário comum do RA que não faz parte da equipe
     db.session.commit()
+
+class GameLog(db.Model):
+    __tablename__ = 'game_logs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    game_id = db.Column(db.Integer, db.ForeignKey('games.id'), nullable=False)
+    username = db.Column(db.String(100), nullable=False)
+    action = db.Column(db.String(200), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    game = db.relationship('Game', backref=db.backref('logs', lazy=True, cascade="all, delete-orphan"))

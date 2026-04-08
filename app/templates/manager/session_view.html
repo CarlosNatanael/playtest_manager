@@ -2,6 +2,9 @@
 {% block content %}
 <div class="mb-4">
     <a href="{{ url_for('manager.index') }}" class="btn btn-outline-secondary btn-sm mb-3">← Back to Manager</a>
+    <button class="btn btn-outline-warning btn-sm mb-3 ms-2 fw-bold" data-bs-toggle="modal" data-bs-target="#logModal">
+        <i class="bi bi-clock-history"></i> View Audit Log
+    </button>
     <h2 class="text-white">Reviewing: {{ test_session.game.title }}</h2>
     <div class="text-muted">
         Tester: <span class="text-ra-blue fw-bold">{{ test_session.tester.ra_username }}</span> | 
@@ -107,6 +110,36 @@
             </div>
         </div>
 
+    </div>
+</div>
+
+
+<div class="modal fade" id="logModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content bg-dark border-secondary">
+            <div class="modal-header border-secondary bg-black">
+                <h5 class="modal-title text-ra-gold"><i class="bi bi-list-columns-reverse me-2"></i>Game Audit Log</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for log in logs %}
+                    <li class="list-group-item bg-dark border-secondary text-white py-3">
+                        <div class="d-flex w-100 justify-content-between mb-1">
+                            <strong class="text-ra-blue"><i class="bi bi-person-fill me-1"></i>{{ log.username }}</strong>
+                            <small class="text-muted">{{ log.timestamp.strftime('%d/%m/%Y %H:%M') }}</small>
+                        </div>
+                        <span class="small text-light">{{ log.action }}</span>
+                    </li>
+                    {% else %}
+                    <li class="list-group-item bg-dark text-muted text-center py-4">No activity logged for this game yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="modal-footer border-secondary bg-black">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

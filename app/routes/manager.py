@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app import db
-from app.models import Game, Achievement, TestSession, TestResult, User
+from app.models import Game, Achievement, TestSession, TestResult, User, GameLog
 from app.services.ra_api import fetch_game_and_achievements
 from datetime import datetime
 import json
@@ -35,6 +35,8 @@ def history():
 def review_session(session_id):
     test_session = TestSession.query.get_or_404(session_id)
     results = TestResult.query.filter_by(session_id=session_id).all()
+
+    game_logs = GameLog.query.filter_by(game_id=test_session.game_id).order_by(GameLog.timestamp.desc()).all()
     
     checklist_dict = {}
     if test_session.checklist_data:
@@ -46,7 +48,8 @@ def review_session(session_id):
     return render_template('manager/session_view.html', 
                            test_session=test_session,
                            results=results,
-                           checklist=checklist_dict)
+                           checklist=checklist_dict,
+                           logs=game_logs)
 
 @manager_bp.route('/import', methods=['GET', 'POST'])
 def import_game():

@@ -1,5 +1,5 @@
 from app import create_app, db
-from app.models import User, Game, Achievement, TestSession, TestResult
+from app.models import User, Game, Achievement, TestSession, TestResult, GameLog
 
 app = create_app()
 
