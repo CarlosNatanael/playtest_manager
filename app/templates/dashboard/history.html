@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}My History | Playtester{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="text-ra-gold"><i class="bi bi-clock-history me-2"></i>My Testing History</h2>
+    
+    <div class="d-flex gap-2 align-items-center">
+        <input type="text" class="form-control bg-black text-white border-secondary table-search" 
+               data-target="#historyTable" 
+               placeholder="Search game or dev..." style="min-width: 200px;">
+        <a href="{{ url_for('dashboard.index') }}" class="btn btn-outline-secondary">Back</a>
+    </div>
+</div>
+
+<div class="card bg-dark border-secondary">
+    <div class="table-responsive">
+        <table id="historyTable" class="table table-dark table-hover align-middle mb-0">
+            <thead class="bg-black text-ra-blue">
+                <tr>
+                    <th class="px-4 py-3">Game</th>
+                    <th class="py-3">Developer</th>
+                    <th class="py-3">Achievements Tested</th>
+                    <th class="text-end px-4 py-3">Completion Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for session in completed_sessions %}
+                <tr>
+                    <td class="px-4">
+                        <div class="d-flex align-items-center">
+                            <img src="https://media.retroachievements.org{{ session.game.image_icon }}" alt="Cover" class="rounded me-3 border border-secondary" style="width: 48px; height: 48px; object-fit: cover;" onerror="this.src='https://media.retroachievements.org/Images/00000.png'">
+                            <div>
+                                <span class="text-ra-blue fw-bold d-block">{{ session.game.title }}</span>
+                                <div class="mt-1 d-flex align-items-center text-muted small">
+                                    <img src="https://static.retroachievements.org/assets/images/system/{{ session.game.get_console_icon() }}.png" 
+                                         alt="{{ session.game.console_name }}" 
+                                         style="width: 16px; height: 16px; object-fit: contain;" 
+                                         class="me-1"
+                                         onerror="this.style.display='none'">
+                                    <span>{{ session.game.console_name }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <img src="https://media.retroachievements.org{{ session.game.developer_pic }}" alt="{{ session.game.developer }}" class="rounded-circle me-2" style="width: 32px; height: 32px; border: 2px solid #ffcc00;" onerror="this.src='https://media.retroachievements.org/UserPic/RetroAchievements.png'">
+                            <span>{{ session.game.developer }}</span>
+                        </div>
+                    </td>
+                    
+                    <td>
+                        {% set val = session.results|selectattr('trigger_status', 'in', ['OK', 'OK_AFTER_RETEST'])|list|length %}
+                        {% set iss = session.results|selectattr('trigger_status', 'in', ['FALSE_TRIGGER', 'NO_TRIGGER', 'OK_AFTER_RETEST'])|list|length %}
+                        <div class="small">
+                            <span class="text-success fw-bold me-2"><i class="bi bi-check-circle"></i> {{ val }} Validated</span>
+                            <span class="text-danger fw-bold"><i class="bi bi-x-circle"></i> {{ iss }} Issues</span>
+                        </div>
+                    </td>
+                    
+                    <td class="text-end px-4">
+                        <div class="small text-white">
+                            {% if session.concluded_at %}
+                                {{ session.concluded_at.strftime('%d/%m/%Y %H:%M') }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted py-5">
+                        <i class="bi bi-archive fs-1 d-block mb-3 opacity-50"></i>
+                        You haven't concluded any tests yet.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

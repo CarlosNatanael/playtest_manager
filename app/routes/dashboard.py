@@ -26,6 +26,15 @@ def index():
                            active_sessions=active_sessions,
                            active_game_ids=active_game_ids)
 
+@dashboard_bp.route('/history')
+def history():
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('auth.login'))
+    completed_sessions = TestSession.query.filter_by(user_id=user_id, status='Concluded').order_by(TestSession.concluded_at.desc()).all()
+    
+    return render_template('dashboard/history.html', completed_sessions=completed_sessions)
+
 @dashboard_bp.route('/view_game/<int:game_id>')
 def view_game(game_id):
     game = Game.query.get_or_404(game_id)
@@ -203,5 +212,5 @@ def validate_hash(session_id):
         is_valid = validate_game_hash(test_session.game_id, hash_to_check)
         return jsonify({'valid': is_valid, 'empty': False})
     except Exception as e:
-        print(f"ERRO NO VALIDADOR DE HASH: {e}") # Vai aparecer no seu terminal!
+        print(f"ERRO NO VALIDADOR DE HASH: {e}")
         return jsonify({'error': str(e)}), 500

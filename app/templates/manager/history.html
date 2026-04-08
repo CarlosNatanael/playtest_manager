@@ -1,13 +1,20 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="text-ra-gold"><i class="bi bi-clock-history me-2"></i>Testing History</h2>
-    <a href="{{ url_for('manager.index') }}" class="btn btn-outline-secondary">Back to Dashboard</a>
+    <h2 class="text-white"><i class="bi bi-archive-fill text-ra-blue me-2"></i>Completed Tests</h2>
+    
+    <div class="d-flex gap-2">
+        <input type="text" class="form-control bg-black text-white border-secondary table-search" 
+               data-target="#managerHistoryTable" 
+               placeholder="Search game, dev or tester...">
+               
+        <a href="{{ url_for('manager.index') }}" class="btn btn-outline-secondary">Back</a>
+    </div>
 </div>
 
 <div class="card bg-dark border-secondary">
     <div class="table-responsive">
-        <table class="table table-dark table-hover align-middle mb-0">
+        <table id="managerHistoryTable" class="table table-dark table-hover align-middle">
             <thead class="bg-black text-ra-blue">
                 <tr>
                     <th class="px-4 py-3">Game</th>

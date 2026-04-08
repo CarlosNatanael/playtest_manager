@@ -117,5 +117,39 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
+    // 7. Filtro de Pesquisa Universal para Tabelas
+    const searchInputs = document.querySelectorAll('.table-search');
+    searchInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            const term = this.value.toLowerCase();
+            // Procura qual tabela este input específico deve filtrar
+            const targetTable = document.querySelector(this.getAttribute('data-target'));
+            if (!targetTable) return;
+
+            const rows = targetTable.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                // Se a linha for aquele aviso de "Não há dados", ignora
+                if (row.querySelector('td') && row.querySelector('td').colSpan > 1) return; 
+                
+                // Esconde a linha se não contiver o texto digitado
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(term) ? '' : 'none';
+            });
+        });
+    });
+
+    // 8. Auto-expandir as caixas de texto (Issue Description)
+    const textareas = document.querySelectorAll('textarea');
+    textareas.forEach(textarea => {
+        // Função que faz a mágica de calcular a altura
+        const autoResize = function() {
+            this.style.height = 'auto'; // Primeiro reseta a altura
+            this.style.height = this.scrollHeight + 'px'; // Depois estica para o tamanho exato do texto
+        };
+
+        textarea.addEventListener('input', autoResize);
+        
+        setTimeout(() => autoResize.call(textarea), 0);
+    });
 
 });
