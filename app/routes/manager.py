@@ -14,18 +14,18 @@ def index():
 
 @manager_bp.route('/review/<int:session_id>')
 def review_session(session_id):
-    session = TestSession.query.get_or_404(session_id)
+    test_session = TestSession.query.get_or_404(session_id)
     results = TestResult.query.filter_by(session_id=session_id).all()
     
     checklist_dict = {}
-    if session.checklist_data:
+    if test_session.checklist_data:
         try:
-            checklist_dict = json.loads(session.checklist_data)
+            checklist_dict = json.loads(test_session.checklist_data)
         except:
             pass
 
     return render_template('manager/session_view.html', 
-                           session=session, 
+                           test_session=test_session,
                            results=results,
                            checklist=checklist_dict)
 

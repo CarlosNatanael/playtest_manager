@@ -41,18 +41,18 @@ def claim_game(game_id):
 
 @dashboard_bp.route('/session/<int:session_id>')
 def test_session(session_id):
-    session = TestSession.query.get_or_404(session_id)
-    results_map = {r.achievement_id: r for r in session.results}
+    test_session = TestSession.query.get_or_404(session_id)
+    results_map = {r.achievement_id: r for r in test_session.results}
 
     checklist_dict = {}
-    if session.checklist_data:
+    if test_session.checklist_data:
         try:
-            checklist_dict = json.loads(session.checklist_data)
+            checklist_dict = json.loads(test_session.checklist_data)
         except:
             pass
 
     return render_template('dashboard/session.html', 
-                           session=session, 
+                           test_session=test_session,
                            results=results_map, 
                            checklist=checklist_dict)
 

@@ -2,7 +2,7 @@
 {% block content %}
 <div class="mb-4">
     <a href="{{ url_for('manager.index') }}" class="btn btn-outline-secondary btn-sm mb-3">← Back to Manager</a>
-    <h2 class="text-white">Reviewing: {{ session.game.title }}</h2>
+    <h2 class="text-white">Reviewing: {{ test_session.game.title }}</h2>
     <div class="text-muted">
         Tester: <span class="text-ra-blue fw-bold">{{ session.tester.ra_username }}</span> | 
         Started: {{ session.started_at.strftime('%d/%m/%Y') }}

@@ -1,35 +1,48 @@
-from flask import Blueprint, request, redirect, url_for
-from app.models import User
-from app import db
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from app.models import User, db
 
 auth_bp = Blueprint('auth', __name__)
 
-@auth_bp.route('/login')
+@auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    return "fluxo de login redirecionando para o RA"
+    if request.method == 'POST':
+        username = request.form.get('username').strip()
 
-@auth_bp.route('/godmode/<ra_username>/<new_role>')
-def hidden_role_update(ra_username, new_role):
-    cargos_validos = ['playtester', 'cr', 'manager', 'bloqueado']
-    
-    if new_role not in cargos_validos:
-        return f"Erro: Cargo '{new_role}' não existe. Use: {', '.join(cargos_validos)}.", 400
-    user = User.query.filter_by(ra_username=ra_username).first()
-    if not user:
-        user = User(ra_username=ra_username, role=new_role)
-        db.session.add(user)
-        msg = f"Usuário {ra_username} CRIADO como {new_role}."
-    else:
-        user.role = new_role
-        msg = f"Usuário {ra_username} ATUALIZADO para {new_role}."
-    db.session.commit()
-    
-    return f"<h3>Sucesso!</h3><p>{msg}</p><p>Acesse o /dashboard para testar.</p>"
+        if not username:
+            flash("Please enter your RA Username.", "danger")
+            return redirect(url_for('auth.login'))
 
-@auth_bp.route('/callback')
-def callback():
-    return "RA devolve a comnunicação"
+        # Procura o utilizador no banco
+        user = User.query.filter_by(ra_username=username).first()
+
+        # Se não existir, a nossa "mágica" cria-o na hora com o cargo certo!
+        if not user:
+            # Regra VIP para a apresentação
+            if username.lower() == 'timecrush':
+                role = 'manager'
+            else:
+                role = 'playtester' # Qualquer outro nick (incluindo cnat) vira tester
+
+            user = User(ra_username=username, role=role)
+            db.session.add(user)
+            db.session.commit()
+
+        # Guarda na sessão do navegador
+        session['user_id'] = user.id
+        session['username'] = user.ra_username
+        session['role'] = user.role
+
+        flash(f"Welcome, {user.ra_username}!", "success")
+
+        # Redireciona o TimeCrush para o Manager e os outros para o Dashboard
+        if user.role == 'manager':
+            return redirect(url_for('manager.index'))
+        else:
+            return redirect(url_for('dashboard.index'))
+
+    return render_template('auth/login.html')
 
 @auth_bp.route('/logout')
 def logout():
-    return "sessão encerrada"
+    session.clear() # Apaga a memória de quem estava logado
+    return redirect(url_for('auth.login'))

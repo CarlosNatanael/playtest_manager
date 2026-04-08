@@ -1,0 +1,26 @@
+body {
+    background-color: #121212;
+    color: #e0e0e0;
+}
+.navbar {
+    background-color: #1a1a1a !important;
+    border-bottom: 2px solid #333;
+}
+.card {
+    background-color: #242424;
+    border: 1px solid #333;
+}
+.text-ra-gold {
+    color: #ffcc00 !important;
+}
+.text-ra-blue {
+    color: #4da6ff !important;
+}
+.badge-jr {
+    background-color: #ffcc00;
+    color: #000;
+}
+.badge-collab {
+    background-color: #9933ff;
+    color: #fff;
+}

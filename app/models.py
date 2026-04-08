@@ -34,6 +34,7 @@ class Game(db.Model):
     def get_console_icon(self):
         """Traduz o nome do console salvo no banco para o nome da imagem do RA"""
         mapping = {
+        'Arcade': 'arc',
         'Atari 2600': '2600',
         '32X': '32x',
         '3DO': '3do',
