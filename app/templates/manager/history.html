@@ -42,10 +42,10 @@
                     </td>
                     <td>
                         <div class="small text-white">
-                            {% if test_session and test_session.expires_at %}
-                                {{ test_session.started_at.strftime('%d/%m/%Y') }}
+                            {% if test_session and test_session.concluded_at %}
+                                {{ test_session.concluded_at.strftime('%d/%m/%Y') }}
                             {% else %}
-                                {{ game.created_at.strftime('%d/%m/%Y') }}
+                                ---
                             {% endif %}
                         </div>
                     </td>

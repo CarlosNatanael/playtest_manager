@@ -114,18 +114,18 @@ def tester_stats():
         
         validated_achs = TestResult.query.join(TestSession).filter(
             TestSession.user_id == tester.id,
-            TestResult.trigger_status == 'OK'
+            TestResult.trigger_status.in_(['OK', 'OK_AFTER_RETEST'])
         ).count()
         
         issues_found = TestResult.query.join(TestSession).filter(
             TestSession.user_id == tester.id,
-            TestResult.trigger_status.in_(['FALSE_TRIGGER', 'NO_TRIGGER'])
+            TestResult.trigger_status.in_(['FALSE_TRIGGER', 'NO_TRIGGER', 'OK_AFTER_RETEST'])
         ).count()
 
         enriched_sessions = []
         for s in sessions:
-            val = sum(1 for r in s.results if r.trigger_status == 'OK')
-            iss = sum(1 for r in s.results if r.trigger_status in ['FALSE_TRIGGER', 'NO_TRIGGER'])
+            val = sum(1 for r in s.results if r.trigger_status in ['OK', 'OK_AFTER_RETEST'])
+            iss = sum(1 for r in s.results if r.trigger_status in ['FALSE_TRIGGER', 'NO_TRIGGER', 'OK_AFTER_RETEST'])
             tested = val + iss
             
             fields_filled = 0

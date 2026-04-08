@@ -125,8 +125,9 @@ class TestSession(db.Model):
     set_impressions = db.Column(db.Text, nullable=True)
     
     status = db.Column(db.String(20), default='Active') # Active, Concluded, Abandoned
-    started_at = db.Column(db.DateTime, default=datetime.utcnow)
+    concluded_at = db.Column(db.DateTime, nullable=True) 
     expires_at = db.Column(db.DateTime, nullable=True)
+    started_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relacionamento
     results = db.relationship('TestResult', backref='session', lazy=True, cascade="all, delete-orphan")

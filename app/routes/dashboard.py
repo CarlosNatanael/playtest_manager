@@ -129,16 +129,21 @@ def autosave(session_id):
 
 @dashboard_bp.route('/abandon/<int:session_id>')
 def abandon_session(session_id):
-    session = TestSession.query.get_or_404(session_id)
-    session.status = 'Abandoned'
-    session.game.status = 'Open' # Libera o jogo para outros
+    test_session = TestSession.query.get_or_404(session_id)
+    test_session.status = 'Abandoned'
+    test_session.game.status = 'Open' # Libera o jogo para outros
     db.session.commit()
+    
+    flash("You have abandoned the test. The game is back on the Request Board.", "warning")
     return redirect(url_for('dashboard.index'))
 
 @dashboard_bp.route('/conclude/<int:session_id>')
 def conclude_session(session_id):
-    session = TestSession.query.get_or_404(session_id)
-    session.status = 'Concluded'
-    session.game.status = 'Completed'
+    test_session = TestSession.query.get_or_404(session_id)
+    test_session.status = 'Concluded'
+    test_session.game.status = 'Completed'
+    test_session.concluded_at = datetime.utcnow() 
+    
     db.session.commit()
+    flash("Test successfully concluded! The report was sent to the Manager.", "success")
     return redirect(url_for('dashboard.index'))
