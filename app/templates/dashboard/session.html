@@ -33,21 +33,25 @@
                     {% for partner in collab_partners %}
                         {% set p_total = partner.game.achievements|length %}
                         {% set p_tested = partner.results|length %}
-                        
-                        <div class="bg-black border border-secondary rounded p-2 d-flex align-items-center" style="min-width: 200px;">
-                            <div class="me-3">
-                                <i class="bi bi-person-circle fs-3 text-ra-blue"></i>
-                            </div>
-                            <div>
-                                <strong class="text-white d-block">{{ partner.tester.ra_username }}</strong>
-                                <span class="badge {{ 'bg-success' if partner.status == 'Concluded' else 'bg-warning text-dark' }} mb-1" style="font-size: 0.65rem;">
-                                    {{ partner.status }}
-                                </span>
-                                <div class="small text-muted" style="font-size: 0.75rem;">
-                                    Progress: <span class="text-info fw-bold">{{ p_tested }}/{{ p_total }}</span>
-                                </div>
+                    <div class="bg-black border border-secondary rounded p-2 d-flex align-items-center" style="min-width: 260px;">
+                        <div class="me-3">
+                            <i class="bi bi-person-circle fs-3 text-ra-blue"></i>
+                        </div>
+                        <div class="flex-grow-1"> 
+                            <strong class="text-white d-block">{{ partner.tester.ra_username }}</strong>
+                            <span class="badge {{ 'bg-success' if partner.status == 'Concluded' else 'bg-warning text-dark' }} mb-1" style="font-size: 0.65rem;">
+                                {{ partner.status }}
+                            </span>
+                            <div class="small text-muted" style="font-size: 0.75rem;">
+                                Progress: <span class="text-info fw-bold">{{ p_tested }}/{{ p_total }}</span>
                             </div>
                         </div>
+                        <div class="ms-3">
+                            <button type="button" class="btn btn-sm btn-outline-info px-2 py-1" data-bs-toggle="modal" data-bs-target="#partnerModal_{{ partner.id }}" title="View Details">
+                                <i class="bi bi-eye-fill">Progress</i>
+                            </button>
+                        </div>
+                    </div>
                     {% endfor %}
                 </div>
             </div>
@@ -229,4 +233,59 @@
             </div>
         </div>
 </div>
+{% if test_session.game.is_collab and collab_partners %}
+    {% for partner in collab_partners %}
+    <div class="modal fade" id="partnerModal_{{ partner.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+            <div class="modal-content bg-dark border-secondary">
+                <div class="modal-header border-secondary bg-black">
+                    <h5 class="modal-title text-ra-gold">
+                        <i class="bi bi-person-video me-2"></i>{{ partner.tester.ra_username }}'s Progress
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    
+                    <h6 class="text-white border-bottom border-secondary pb-2 mb-3">Environment Settings</h6>
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <strong class="text-ra-gold small">Emulator:</strong>
+                            <div class="text-white">{{ partner.emulator or 'Not specified' }}</div>
+                        </div>
+                        <div class="col-md-4">
+                            <strong class="text-ra-gold small">Core:</strong>
+                            <div class="text-white">{{ partner.core or 'Not specified' }}</div>
+                        </div>
+                        <div class="col-md-4">
+                            <strong class="text-ra-gold small">ROM Hash:</strong>
+                            <div class="text-white" style="word-break: break-all;">{{ partner.hash_used or 'Not specified' }}</div>
+                        </div>
+                    </div>
+
+                    <h6 class="text-white border-bottom border-secondary pb-2 mb-3">Tested Achievements ({{ partner.results|length }})</h6>
+                    <div class="list-group list-group-flush border border-secondary rounded">
+                        {% for res in partner.results %}
+                        <div class="list-group-item bg-black text-white border-secondary d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <img src="https://media.retroachievements.org/Badge/{{ res.achievement.badge_name }}.png" style="width: 32px;" class="me-3" onerror="this.src='https://media.retroachievements.org/Badge/00000.png'">
+                                <span class="fw-bold">{{ res.achievement.title }}</span>
+                            </div>
+                            <span class="badge {{ 'bg-success' if res.trigger_status == 'OK' else 'bg-info text-dark' if res.trigger_status == 'OK_AFTER_RETEST' else 'bg-danger' if res.trigger_status == 'FALSE_TRIGGER' else 'bg-warning text-dark' }}">
+                                {{ 'RETEST OK' if res.trigger_status == 'OK_AFTER_RETEST' else res.trigger_status }}
+                            </span>
+                        </div>
+                        {% else %}
+                        <div class="list-group-item bg-black text-muted text-center py-3">No achievements tested yet.</div>
+                        {% endfor %}
+                    </div>
+
+                </div>
+                <div class="modal-footer border-secondary bg-black">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% endif %}
 {% endblock %}
