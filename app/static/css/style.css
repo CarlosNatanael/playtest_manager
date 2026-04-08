@@ -24,3 +24,12 @@ body {
     background-color: #9933ff;
     color: #fff;
 }
+
+.tester-row:hover {
+    background-color: #1f1f1f !important;
+}
+
+/* Quando a linha está "aberta", a seta roda 90 graus para baixo */
+.tester-row[aria-expanded="true"] .toggle-icon {
+    transform: rotate(90deg);
+}

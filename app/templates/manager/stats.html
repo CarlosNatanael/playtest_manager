@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+
+{% block title %}Tester Stats | Manager{% endblock %}
+
+{% block content %}
+<style>
+    .tester-row:hover {
+        background-color: #1f1f1f !important;
+        transition: background-color 0.2s ease-in-out;
+    }
+    .toggle-icon {
+        transition: transform 0.3s ease;
+        display: inline-block;
+    }
+    .tester-row[aria-expanded="true"] .toggle-icon {
+        transform: rotate(90deg);
+    }
+    .tester-row[aria-expanded="true"] td {
+        border-bottom-color: transparent !important;
+    }
+    
+    .metric-label {
+        font-size: 0.75rem;
+        letter-spacing: 1px;
+        margin-bottom: 0.25rem;
+    }
+    .text-ra-cyan { color: #0dcaf0; }
+    .text-ra-green { color: #198754; }
+    .text-ra-red { color: #dc3545; }
+    .text-ra-blue-dark { color: #0d6efd; }
+</style>
+
+<div class="mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <h2 class="text-ra-gold"><i class="bi bi-bar-chart-fill me-2"></i>Playtester Statistics</h2>
+        <a href="{{ url_for('manager.index') }}" class="btn btn-outline-secondary">Back to Dashboard</a>
+    </div>
+    <p class="text-muted">Overview of testing metrics across all active playtesters.</p>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card bg-dark border-secondary">
+            <div class="card-body p-0 table-responsive">
+                <table class="table table-dark align-middle mb-0" style="border-collapse: collapse;">
+                    <thead class="bg-black text-ra-blue">
+                        <tr>
+                            <th class="py-3 px-4">Tester</th>
+                            <th class="py-3 text-center">Reports Submitted</th>
+                            <th class="py-3 text-center">Validated Achievements</th>
+                            <th class="py-3 text-center">Issues Found</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in stats_data %}
+                        
+                        <tr class="bg-black tester-row" 
+                            data-target="#collapse_{{ loop.index }}" 
+                            aria-expanded="false" 
+                            style="cursor: pointer;">
+                            
+                            <td class="px-4 fw-bold text-white fs-5 border-secondary">
+                                <i class="bi bi-chevron-right me-2 text-ra-gold fs-6 toggle-icon"></i> 
+                                {{ stat.username }}
+                            </td>
+                            <td class="text-center border-secondary">
+                                <span class="badge bg-info text-dark fs-6 px-3 py-2">{{ stat.reports }}</span>
+                            </td>
+                            <td class="text-center border-secondary">
+                                <span class="badge bg-success fs-6 px-3 py-2">{{ stat.validated }}</span>
+                            </td>
+                            <td class="text-center border-secondary">
+                                <span class="badge bg-danger fs-6 px-3 py-2">{{ stat.issues }}</span>
+                            </td>
+                        </tr>
+                    
+                        <tr>
+                            <td colspan="4" class="p-0 border-0">
+                                <div class="collapse bg-dark" id="collapse_{{ loop.index }}">
+                                    <div class="p-4 border-start border-end border-bottom border-secondary mb-4 rounded-bottom mx-2 mt-0">
+                                        
+                                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 border-bottom border-secondary pb-2 gap-2">
+                                            <h6 class="text-ra-gold mb-0">Tested Sets Portfolio</h6>
+                                            
+                                            {% if stat.sessions %}
+                                            <div class="input-group input-group-sm" style="max-width: 250px;">
+                                                <span class="input-group-text bg-black border-secondary text-muted">
+                                                    <i class="bi bi-search"></i>
+                                                </span>
+                                                <input type="text" class="form-control bg-black text-white border-secondary game-search-input" 
+                                                       placeholder="Search game..." 
+                                                       data-target-list="portfolio-list-{{ loop.index }}">
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        {% if stat.sessions %}
+                                            <div class="d-flex flex-column gap-3" id="portfolio-list-{{ loop.index }}">
+                                                {% for s_data in stat.sessions %}
+                                                {% set s = s_data.obj %}
+                                                
+                                                <div class="bg-black border border-secondary rounded p-3 d-flex flex-column flex-xl-row justify-content-between align-items-center gap-2 portfolio-item">
+                                                    
+                                                    <div class="d-flex align-items-center flex-grow-1" style="min-width: 0;">
+                                                        {% if s.status == 'Concluded' %}
+                                                            <span class="badge bg-success me-2" style="min-width: 75px;">Concluded</span>
+                                                        {% elif s.status == 'Active' %}
+                                                            <span class="badge bg-warning text-dark me-2" style="min-width: 75px;">Active</span>
+                                                        {% else %}
+                                                            <span class="badge bg-secondary me-2" style="min-width: 75px;">{{ s.status }}</span>
+                                                        {% endif %}
+                                                        
+                                                        <img src="https://static.retroachievements.org/assets/images/system/{{ s.game.get_console_icon() }}.png" style="width: 18px;" class="me-2">
+                                                        
+                                                        <strong class="text-ra-blue text-truncate pe-3 game-title" title="{{ s.game.title }}">{{ s.game.title }}</strong>
+                                                    </div>
+                                                    
+                                                    <div class="d-flex justify-content-around text-center" style="min-width: 450px;">
+                                                        <div>
+                                                            <div class="fw-bold text-uppercase metric-label text-ra-cyan">Fields Filled</div>
+                                                            <div class="fs-6 fw-bold text-white">{{ s_data.fields }}</div>
+                                                        </div>
+                                                        <div>
+                                                            <div class="fw-bold text-uppercase metric-label text-ra-green">Validated</div>
+                                                            <div class="fs-6 fw-bold text-ra-green">{{ s_data.val }}</div>
+                                                        </div>
+                                                        <div>
+                                                            <div class="fw-bold text-uppercase metric-label text-ra-red">Issues</div>
+                                                            <div class="fs-6 fw-bold text-ra-red">{{ s_data.iss }}</div>
+                                                        </div>
+                                                        <div>
+                                                            <div class="fw-bold text-uppercase metric-label text-ra-blue-dark">Tested</div>
+                                                            <div class="fs-6 fw-bold text-white">{{ s_data.tested }} <span class="text-muted" style="font-size: 0.8rem;">/ {{ s.game.achievements|length }}</span></div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="ms-xl-3 mt-3 mt-xl-0">
+                                                        <a href="{{ url_for('manager.review_session', session_id=s.id) }}" class="btn btn-sm btn-outline-info fw-bold px-4">
+                                                            Analyze
+                                                        </a>
+                                                    </div>
+                                                    
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            <p class="text-muted small mb-0 fst-italic">This tester hasn't claimed any games yet.</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">No playtester data available yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // 1. Script da Sanfona (Abre e fecha as linhas suavemente)
+    const rows = document.querySelectorAll('.tester-row');
+    rows.forEach(row => {
+        row.addEventListener('click', function(e) {
+            // Evita que a sanfona feche se o utilizador clicar na barra de pesquisa
+            if(e.target.tagName === 'INPUT') return;
+
+            const targetSelector = this.getAttribute('data-target');
+            const targetElement = document.querySelector(targetSelector);
+            const bsCollapse = bootstrap.Collapse.getOrCreateInstance(targetElement, { toggle: false });
+            
+            if (targetElement.classList.contains('show')) {
+                bsCollapse.hide();
+                this.setAttribute('aria-expanded', 'false');
+            } else {
+                bsCollapse.show();
+                this.setAttribute('aria-expanded', 'true');
+            }
+        });
+    });
+
+    // 2. Script de Pesquisa em Tempo Real
+    const searchInputs = document.querySelectorAll('.game-search-input');
+    searchInputs.forEach(input => {
+        // Usa o evento 'input' para disparar a cada letra digitada ou apagada
+        input.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const targetListId = this.getAttribute('data-target-list');
+            const listItems = document.querySelectorAll(`#${targetListId} .portfolio-item`);
+
+            listItems.forEach(item => {
+                const titleElement = item.querySelector('.game-title');
+                if (titleElement) {
+                    const titleText = titleElement.textContent.toLowerCase();
+                    // Se o título tiver o que foi digitado, remove a classe 'd-none', caso contrário, adiciona.
+                    if (titleText.includes(searchTerm)) {
+                        item.classList.remove('d-none');
+                        // Garante que as classes flexbox originais voltam a atuar
+                        item.classList.add('d-flex'); 
+                    } else {
+                        item.classList.remove('d-flex');
+                        item.classList.add('d-none');
+                    }
+                }
+            });
+        });
+    });
+});
+</script>
+{% endblock %}
