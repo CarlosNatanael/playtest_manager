@@ -96,6 +96,7 @@ def autosave(session_id):
     if 'core' in data: session.core = data['core']
     if 'hash_used' in data: session.hash_used = data['hash_used']
     if 'is_collab' in data: session.is_collab = data['is_collab']
+    if 'set_impressions' in data: session.set_impressions = data['set_impressions']
     
     # Atualiza ou cria o resultado de uma conquista específica
     if 'achievement_id' in data:

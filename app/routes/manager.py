@@ -3,6 +3,7 @@ from app import db
 from app.models import Game, Achievement, TestSession, TestResult
 from app.services.ra_api import fetch_game_and_achievements
 from datetime import datetime
+import json
 
 manager_bp = Blueprint('manager', __name__)
 
@@ -15,7 +16,18 @@ def index():
 def review_session(session_id):
     session = TestSession.query.get_or_404(session_id)
     results = TestResult.query.filter_by(session_id=session_id).all()
-    return render_template('manager/session_view.html', session=session, results=results)
+    
+    checklist_dict = {}
+    if session.checklist_data:
+        try:
+            checklist_dict = json.loads(session.checklist_data)
+        except:
+            pass
+
+    return render_template('manager/session_view.html', 
+                           session=session, 
+                           results=results,
+                           checklist=checklist_dict)
 
 @manager_bp.route('/import', methods=['GET', 'POST'])
 def import_game():

@@ -121,6 +121,7 @@ class TestSession(db.Model):
     hash_used = db.Column(db.String(100), nullable=True)
     is_collab = db.Column(db.Boolean, default=False)
     checklist_data = db.Column(db.Text, nullable=True)
+    set_impressions = db.Column(db.Text, nullable=True)
     
     status = db.Column(db.String(20), default='Active') # Active, Concluded, Abandoned
     started_at = db.Column(db.DateTime, default=datetime.utcnow)
