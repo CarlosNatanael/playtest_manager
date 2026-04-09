@@ -1,42 +1,75 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from app.models import User, db
+import os
+import json
+import requests
+from flask import Blueprint, request, render_template, redirect, url_for, flash, session, current_app
 
 auth_bp = Blueprint('auth', __name__)
 
+def get_allowed_users():
+    file_path = os.path.join(current_app.instance_path, 'allowed_users.json')
+    try:
+        with open(file_path, 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
+
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
+    if 'username' in session and 'role' in session:
+        return redirect_by_role(session['role'])
+
     if request.method == 'POST':
-        username = request.form.get('username').strip()
+        username = request.form.get('username')
+        api_key = request.form.get('api_key')
 
-        if not username:
-            flash("Please enter your RA Username.", "danger")
+        if not username or not api_key:
+            flash('Please enter both Username and Web API Key.', 'warning')
             return redirect(url_for('auth.login'))
-        user = User.query.filter_by(ra_username=username).first()
 
-        if not user:
-            if username.lower() == 'timecrush':
-                role = 'manager'
-            else:
-                role = 'playtester'
+        allowed_users = get_allowed_users()
+        if username not in allowed_users:
+            flash('Access Denied: You do not have an authorized role in Playtest Coordinator.', 'danger')
+            return redirect(url_for('auth.login'))
 
-            user = User(ra_username=username, role=role)
-            db.session.add(user)
-            db.session.commit()
+        api_url = f"https://retroachievements.org/API/API_GetUserProfile.php?z={username}&y={api_key}&u={username}"
+        
+        headers = {
+            'User-Agent': 'PlaytestManager/1.0'
+        }
+        
+        try:
+            response = requests.get(api_url, headers=headers, timeout=10)
+            data = response.json()
 
-        session['user_id'] = user.id
-        session['username'] = user.ra_username
-        session['role'] = user.role
+            if type(data) is not dict or data.get('User') != username:
+                flash('Credenciais inválidas na RetroAchievements.', 'danger')
+                return redirect(url_for('auth.login'))
+                
+        except Exception as e:
+            flash(f'Erro ao conectar com a RetroAchievements.', 'danger')
+            return redirect(url_for('auth.login'))
 
-        flash(f"Welcome, {user.ra_username}!", "success")
+        session['username'] = username
+        session['role'] = allowed_users[username]
 
-        if user.role == 'manager':
-            return redirect(url_for('manager.index'))
-        else:
-            return redirect(url_for('dashboard.index'))
+        return redirect_by_role(session['role'])
 
     return render_template('auth/login.html')
 
 @auth_bp.route('/logout')
 def logout():
     session.clear()
+    flash('You have been logged out.', 'info')
     return redirect(url_for('auth.login'))
+
+def redirect_by_role(role):
+    if role == 'Engineer':
+        return redirect(url_for('manager.engineer_dashboard'))
+    elif role == 'Playtest Manager':
+        return redirect(url_for('manager.dashboard'))
+    elif role == 'QA':
+        return redirect(url_for('qa.dashboard'))
+    elif role == 'CR':
+        return redirect(url_for('cr.dashboard'))
+    else:
+        return redirect(url_for('dashboard.index'))

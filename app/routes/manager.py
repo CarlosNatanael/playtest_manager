@@ -19,6 +19,10 @@ def index():
                            active_sessions_map=active_sessions_map, 
                            now=datetime.utcnow())
 
+@manager_bp.route('/engineer')
+def engineer_dashboard():
+    return render_template('manager/engineer.html')
+
 @manager_bp.route('/history')
 def history():
     games = Game.query.filter_by(status='Completed').all()

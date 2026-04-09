@@ -170,3 +170,12 @@ class GameLog(db.Model):
     action = db.Column(db.String(200), nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     game = db.relationship('Game', backref=db.backref('logs', lazy=True, cascade="all, delete-orphan"))
+
+from app import db
+
+class UserRole(db.Model):
+    __tablename__ = 'user_roles'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), unique=True, nullable=False)
+    role = db.Column(db.String(50), nullable=False)

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Engineer Dashboard - Playtest Manager{% endblock %}
+
+{% block content %}
+<div class="container mt-5 d-flex flex-column align-items-center">
+    
+    <div class="card shadow p-5 text-center" style="max-width: 600px; width: 100%;">
+        <h1 class="text-primary mb-3">Painel do Engineer</h1>
+        
+        <p class="lead mb-4">
+            Bem-vindo, <strong>{{ session.get('username') }}</strong>! Você tem acesso de nível sistema.
+        </p>
+        
+        <hr class="w-100 mb-4">
+
+        <a href="{{ url_for('auth.logout') }}" class="btn btn-danger btn-lg font-weight-bold w-100">
+            Sair do Sistema
+        </a>
+    </div>
+
+</div>
+{% endblock %}

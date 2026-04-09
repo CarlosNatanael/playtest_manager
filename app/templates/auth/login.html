@@ -1,35 +1,33 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}Login | Playtest Manager{% endblock %}
+{% block title %}Login - Playtest Coordinator{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center align-items-center" style="min-height: 75vh;">
-    <div class="col-md-5 col-lg-4">
-        <div class="card border-primary bg-dark shadow-lg">
-            <div class="card-header text-center border-primary bg-black p-4">
-                <h3 class="text-ra-gold mb-0 fw-bold">
-                    <i class="bi bi-controller"></i> Playtest Manager
-                </h3>
-            </div>
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="card shadow p-4" style="width: 100%; max-width: 400px;">
+        <h2 class="text-center mb-4 text-primary">Playtest Coordinator</h2>
+
+        <form method="POST" action="{{ url_for('auth.login') }}">
             
-            <div class="card-body p-4">
-                <form action="{{ url_for('auth.login') }}" method="POST">
-                    <div class="mb-4">
-                        <label class="form-label text-white small fw-bold">RA Username</label>
-                        <input type="text" 
-                               name="username" 
-                               class="form-control bg-black text-white border-secondary form-control-lg" 
-                               placeholder="e.g. TimeCrush or cnat" 
-                               required 
-                               autofocus>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary w-100 fw-bold btn-lg">
-                        Access Platform
-                    </button>
-                </form>
+            <div class="mb-3">
+                <label for="username" class="form-label font-weight-bold">RA Username</label>
+                <input type="text" id="username" name="username" class="form-control" required>
             </div>
-        </div>
+
+            <div class="mb-4">
+                <label for="api_key" class="form-label font-weight-bold">Web API Key</label>
+                <input type="password" id="api_key" name="api_key" class="form-control" required>
+                <small class="form-text text-muted mt-2 d-block">
+                    You can find your Web API Key in your 
+                    <a href="https://retroachievements.org/controlpanel.php" target="_blank">RA Control Panel</a>.
+                </small>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 font-weight-bold">
+                Login
+            </button>
+            
+        </form>
     </div>
 </div>
 {% endblock %}
