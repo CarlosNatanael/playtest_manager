@@ -181,7 +181,7 @@ def abandon_session(session_id):
     test_session.game.status = 'Open'
     log = GameLog(game_id=test_session.game_id, username=session.get('username'), action="Abandoned the test")
     db.session.add(log)
-    db.session.commit() # Adicionei o commit aqui que faltava no original
+    db.session.commit()
     
     flash("You have abandoned the test. The game is back on the Request Board.", "warning")
     return redirect(url_for('dashboard.index'))
@@ -213,4 +213,4 @@ def validate_hash(session_id):
         return jsonify({'valid': is_valid, 'empty': False})
     except Exception as e:
         print(f"ERRO NO VALIDADOR DE HASH: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'An internal error occurred while trying to validate the hash. Please try again later.'}), 500
