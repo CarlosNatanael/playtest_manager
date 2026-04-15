@@ -1,6 +1,5 @@
 import os
 import json
-import requests
 from flask import Blueprint, request, render_template, redirect, url_for, flash, session, current_app
 
 auth_bp = Blueprint('auth', __name__)
@@ -8,10 +7,10 @@ auth_bp = Blueprint('auth', __name__)
 def get_allowed_users():
     file_path = os.path.join(current_app.instance_path, 'allowed_users.json')
     try:
-        with open(file_path, 'r') as f:
+        with open(file_path, 'r', encoding='utf-8') as f:
             return json.load(f)
     except FileNotFoundError:
-        return {}
+        return {} 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -20,37 +19,24 @@ def login():
 
     if request.method == 'POST':
         username = request.form.get('username')
-        api_key = request.form.get('api_key')
+        password = request.form.get('password') 
 
-        if not username or not api_key:
-            flash('Please enter both Username and Web API Key.', 'warning')
+        if not username or not password:
+            flash('Please enter your Username and Password.', 'warning')
             return redirect(url_for('auth.login'))
 
-        allowed_users = get_allowed_users()
-        if username not in allowed_users:
-            flash('Access Denied: You do not have an authorized role in Playtest Coordinator.', 'danger')
+        users_db = get_allowed_users()
+        if username not in users_db:
+            flash('Access Denied: Your user is not registered in the team.', 'danger')
             return redirect(url_for('auth.login'))
-
-        api_url = f"https://retroachievements.org/API/API_GetUserProfile.php?z={username}&y={api_key}&u={username}"
-        
-        headers = {
-            'User-Agent': 'PlaytestManager/1.0'
-        }
-        
-        try:
-            response = requests.get(api_url, headers=headers, timeout=10)
-            data = response.json()
-
-            if type(data) is not dict or data.get('User') != username:
-                flash('Credenciais inválidas na RetroAchievements.', 'danger')
-                return redirect(url_for('auth.login'))
-                
-        except Exception as e:
-            flash(f'Erro ao conectar com a RetroAchievements.', 'danger')
+            
+        user_data = users_db[username]
+        if user_data['password'] != password:
+            flash('Incorrect password.', 'danger')
             return redirect(url_for('auth.login'))
-
+            
         session['username'] = username
-        session['role'] = allowed_users[username]
+        session['role'] = user_data['role']
 
         return redirect_by_role(session['role'])
 
@@ -59,7 +45,7 @@ def login():
 @auth_bp.route('/logout')
 def logout():
     session.clear()
-    flash('You have been logged out.', 'info')
+    flash('You have successfully logged out.', 'info')
     return redirect(url_for('auth.login'))
 
 def redirect_by_role(role):

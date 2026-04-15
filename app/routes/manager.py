@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from app import db
 from app.models import Game, Achievement, TestSession, TestResult, User, GameLog
 from app.services.ra_api import fetch_game_and_achievements
@@ -184,3 +184,14 @@ def delete_game(game_id):
     db.session.commit()
     flash(f"Game '{title}' has been removed from the database.", "success")
     return redirect(url_for('manager.index'))
+
+@manager_bp.before_request
+def restrict_manager_access():
+    if 'username' not in session:
+        flash('Please log in to access this area.', 'warning')
+        return redirect(url_for('auth.login'))
+    
+    allowed_roles = ['Playtest Manager', 'Engineer']
+    if session.get('role') not in allowed_roles:
+        flash('Access Denied: You do not have Manager permissions.', 'danger')
+        return redirect(url_for('dashboard.index'))

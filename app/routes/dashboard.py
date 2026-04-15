@@ -26,6 +26,12 @@ def index():
                            active_sessions=active_sessions,
                            active_game_ids=active_game_ids)
 
+@dashboard_bp.before_request
+def restrict_dashboard_access():
+    if 'username' not in session:
+        flash('Please log in to access the system.', 'warning')
+        return redirect(url_for('auth.login'))
+
 @dashboard_bp.route('/history')
 def history():
     user_id = session.get('user_id')
