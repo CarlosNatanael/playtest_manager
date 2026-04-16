@@ -52,7 +52,7 @@ def redirect_by_role(role):
     if role == 'Engineer':
         return redirect(url_for('manager.engineer_dashboard'))
     elif role == 'Playtest Manager':
-        return redirect(url_for('manager.dashboard'))
+        return redirect(url_for('manager.index'))
     elif role == 'QA':
         return redirect(url_for('qa.dashboard'))
     elif role == 'CR':
