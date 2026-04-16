@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="mb-4">
+    <h2 class="text-white">CR Public Review Board</h2>
+    <p class="text-muted small">Real-time set analysis for Code Reviewers.</p>
+</div>
+
+<div class="card bg-dark border-secondary">
+    <div class="table-responsive">
+        <table class="table table-dark table-hover align-middle mb-0">
+            <thead>
+                <tr class="text-muted small text-uppercase">
+                    <th class="px-4">Set Name</th>
+                    <th>Developer</th>
+                    <th>Status</th>
+                    <th>Tester Comments & Issues</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for game in games %}
+                <tr>
+                    <td class="px-4">
+                        <span class="text-ra-blue fw-bold d-block">{{ game.title }}</span>
+                        <small class="text-muted">{{ game.console_name }}</small>
+                    </td>
+                    <td>{{ game.developer }}</td>
+                    <td>
+                        <span class="badge bg-{{ 'success' if game.status == 'Completed' else 'warning' }}">
+                            {{ game.status }}
+                        </span>
+                    </td>
+                    <td>
+                        {% for session in game.test_sessions %}
+                            <div class="border-start border-info ps-2 mb-2">
+                                <small class="d-block text-white"><strong>Tester:</strong> {{ session.tester.ra_username }}</small>
+                                <small class="text-muted italic">{{ session.set_impressions or "No comments yet." }}</small>
+                                {% if session.results %}
+                                    <div class="mt-1">
+                                        <span class="badge bg-danger p-1" style="font-size: 0.6rem;">Issues Found</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

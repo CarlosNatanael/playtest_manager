@@ -62,12 +62,18 @@
                     </td>
                     
                     <td class="text-end px-4">
-                        <div class="small text-white">
-                            {% if session.concluded_at %}
-                                {{ session.concluded_at.strftime('%d/%m/%Y %H:%M') }}
-                            {% else %}
-                                N/A
-                            {% endif %}
+                        <div class="d-flex justify-content-end align-items-center gap-3">
+                            <a href="{{ url_for('dashboard.test_session', session_id=session.id) }}" class="btn btn-sm btn-outline-info fw-bold">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+                            
+                            <div class="small text-white" style="min-width: 120px;">
+                                {% if session.concluded_at %}
+                                    {{ session.concluded_at.strftime('%d/%m/%Y %H:%M') }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </div>
                         </div>
                     </td>
                 </tr>

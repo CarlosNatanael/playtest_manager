@@ -198,3 +198,11 @@ def restrict_manager_access():
     if session.get('role') not in allowed_roles:
         flash('Access Denied: You do not have Manager permissions.', 'danger')
         return redirect(url_for('dashboard.index'))
+    
+@manager_bp.route('/reopen_retest/<int:game_id>', methods=['POST'])
+def reopen_retest(game_id):
+    game = Game.query.get_or_404(game_id)
+    game.status = 'Re-test'
+    db.session.commit()
+    flash(f"Game '{game.title}' is now back on the Request Board for a second test.", "success")
+    return redirect(url_for('manager.history'))

@@ -111,12 +111,21 @@ def test_session(session_id):
     first_session = TestSession.query.filter_by(game_id=test_session.game_id).order_by(TestSession.id.asc()).first()
     is_owner = first_session and (first_session.user_id == session.get('user_id'))
 
-    return render_template('dashboard/session.html',
-                           test_session=test_session,
-                           results=results_map, 
+    if test_session.status == 'Concluded':
+        return render_template('dashboard/session_view.html', 
+                               test_session=test_session, 
+                               checklist=checklist_dict,
+                               results=test_session.results,
+                               collab_partners=collab_partners, 
+                               is_owner=is_owner)
+    
+    return render_template('dashboard/session.html', 
+                           test_session=test_session, 
+                           results=results_map,
                            checklist=checklist_dict,
-                           collab_partners=collab_partners,
+                           collab_partners=collab_partners, 
                            is_owner=is_owner)
+
 
 @dashboard_bp.route('/session/save/<int:session_id>', methods=['POST'])
 def save_session(session_id):

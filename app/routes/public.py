@@ -1,4 +1,5 @@
-from flask import Blueprint, redirect, url_for, session
+from flask import Blueprint, redirect, url_for, session, render_template
+from app.models import Game
 
 public_bp = Blueprint('public', __name__)
 
@@ -10,3 +11,8 @@ def index():
         return redirect(url_for('manager.index'))
     else:
         return redirect(url_for('dashboard.index'))
+    
+@public_bp.route('/cr-board')
+def cr_board():
+    games = Game.query.order_by(Game.created_at.desc()).all()
+    return render_template('public/cr.html', games=games)
