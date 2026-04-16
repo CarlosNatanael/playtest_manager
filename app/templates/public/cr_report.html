@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="mb-4">
-    <a href="{{ url_for('dashboard.history') }}" class="btn btn-outline-secondary btn-sm mb-3">
-        <i class="bi bi-arrow-left"></i> Back to History
+    <a href="{{ url_for('public.cr_board') }}" class="btn btn-outline-secondary btn-sm mb-3">
+        <i class="bi bi-arrow-left"></i> Back to Review Board
     </a>
     
     <h2 class="text-white">Reviewing Session: <span class="text-ra-blue">{{ test_session.game.title }}</span></h2>
