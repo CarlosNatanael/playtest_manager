@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="text-white">QA Manager Dashboard</h2>
@@ -100,72 +101,158 @@
     </div>
 </div>
 <br>
-<div class="accordion mb-4" id="accordionRaioX">
-    <div class="card bg-dark border-warning shadow">
-        
-        <div class="card-header py-3 d-flex justify-content-between align-items-center" 
-             id="headingRaioX" 
-             data-bs-toggle="collapse" 
-             data-bs-target="#collapseRaioX" 
-             aria-expanded="false" 
-             aria-controls="collapseRaioX" 
-             style="cursor: pointer; background-color: #11141d;">
-            
-            <h6 class="m-0 fw-bold text-warning">
-                <i class="bi bi-clock-history me-2"></i> Raio-X de Prazos (SLA)
-                <small class="text-muted ms-2 fw-normal"><i class="bi bi-chevron-down"></i> Clique para expandir</small>
-            </h6>
-            <span class="badge bg-warning text-dark text-uppercase">Atenção Necessária</span>
-        </div>
 
-        <div id="collapseRaioX" class="collapse" aria-labelledby="headingRaioX" data-bs-parent="#accordionRaioX">
-            <div class="card-body bg-dark p-0">
-                <ul class="list-group list-group-flush">
-                    {% set contagem_sla = 0 %}
+<div class="card bg-dark border-warning shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center" 
+         id="slaHeader"
+         style="cursor: pointer; background-color: #11141d; user-select: none;"
+         role="button">
+        
+        <h6 class="m-0 fw-bold text-warning">
+            <i class="bi bi-clock-history me-2"></i> SLA Deadline Overview
+            <small class="text-muted ms-2 fw-normal">
+                <i class="bi bi-chevron-down" id="toggleIcon"></i> Click to expand/collapse
+            </small>
+        </h6>
+        <span class="badge bg-warning text-dark text-uppercase">Attention Required</span>
+    </div>
+
+    <div id="collapseRaioX" class="collapse">
+        <div class="card-body bg-dark p-0">
+            <ul class="list-group list-group-flush">
+                {% set contagem_sla = 0 %}
+                
+                {% for game in games %}
+                    {% set sess = active_sessions_map.get(game.id) %}
                     
-                    {% for game in games %}
-                        {% set sess = active_sessions_map.get(game.id) %}
+                    {% if sess and sess.expires_at %}
+                        {% set contagem_sla = contagem_sla + 1 %}
                         
-                        {% if sess and sess.expires_at %}
-                            {% set contagem_sla = contagem_sla + 1 %}
+                        <li class="list-group-item bg-dark text-white d-flex justify-content-between align-items-center px-4 py-3 border-secondary">
+                            <div>
+                                <strong class="text-ra-blue">{{ game.title }}</strong> <span class="text-muted small">({{ game.console_name }})</span><br>
+                                <small class="text-light">
+                                    Tester: <span class="fw-bold">{{ sess.tester.ra_username }}</span> | 
+                                    Deadline: {{ sess.expires_at.strftime('%d/%m/%Y') }}
+                                </small>
+                            </div>
                             
-                            <li class="list-group-item bg-dark text-white d-flex justify-content-between align-items-center px-4 py-3 border-secondary">
-                                <div>
-                                    <strong class="text-ra-blue">{{ game.title }}</strong> <span class="text-muted small">({{ game.console_name }})</span><br>
-                                    <small class="text-light">
-                                        Tester: <span class="fw-bold">{{ sess.tester.ra_username }}</span> | 
-                                        Prazo: {{ sess.expires_at.strftime('%d/%m/%Y') }}
-                                    </small>
-                                </div>
-                                
-                                <div class="text-end">
-                                    {% if sess.days_remaining != None %}
-                                        {% if sess.days_remaining <= 2 %}
-                                            <span class="badge bg-danger p-2"><i class="bi bi-exclamation-circle"></i> Faltam {{ sess.days_remaining }} dias</span>
-                                        {% elif sess.days_remaining <= 5 %}
-                                            <span class="badge bg-warning text-dark p-2"><i class="bi bi-exclamation-triangle"></i> Faltam {{ sess.days_remaining }} dias</span>
-                                        {% else %}
-                                            <span class="badge bg-success p-2"><i class="bi bi-check-circle"></i> Faltam {{ sess.days_remaining }} dias</span>
-                                        {% endif %}
+                            <div class="text-end">
+                                {% if sess.days_remaining != None %}
+                                    {% if sess.days_remaining <= 2 %}
+                                        <span class="badge bg-danger p-2"><i class="bi bi-exclamation-circle"></i> {{ sess.days_remaining }} days left</span>
+                                    {% elif sess.days_remaining <= 5 %}
+                                        <span class="badge bg-warning text-dark p-2"><i class="bi bi-exclamation-triangle"></i> {{ sess.days_remaining }} days left</span>
                                     {% else %}
-                                        <span class="badge bg-secondary p-2">Sem prazo</span>
+                                        <span class="badge bg-success p-2"><i class="bi bi-check-circle"></i> {{ sess.days_remaining }} days left</span>
                                     {% endif %}
-                                    
-                                    <span class="badge bg-info text-dark p-2 ms-1">{{ game.developer_level }}</span>
-                                </div>
-                            </li>
-                        {% endif %}
-                    {% endfor %}
-                    
-                    {% if contagem_sla == 0 %}
-                        <div class="p-4 text-center text-muted">
-                            <i class="bi bi-check2-circle fs-3 d-block mb-2"></i>
-                            Nenhum jogo com prazo ativo no momento.
-                        </div>
+                                {% else %}
+                                    <span class="badge bg-secondary p-2">No deadline</span>
+                                {% endif %}
+                                
+                                <span class="badge bg-info text-dark p-2 ms-1">{{ game.developer_level }}</span>
+                            </div>
+                        </li>
                     {% endif %}
-                </ul>
-            </div>
+                {% endfor %}
+                
+                {% if contagem_sla == 0 %}
+                    <div class="p-4 text-center text-muted">
+                        <i class="bi bi-check2-circle fs-3 d-block mb-2"></i>
+                        No games with active deadlines at the moment.
+                    </div>
+                {% endif %}
+            </ul>
         </div>
     </div>
 </div>
+
+<!-- SCRIPT DE CORREÇÃO DO COLLAPSE -->
+<script>
+(function() {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initCollapse);
+    } else {
+        initCollapse();
+    }
+    
+    function initCollapse() {
+        const header = document.getElementById('slaHeader');
+        const collapseElement = document.getElementById('collapseRaioX');
+        const toggleIcon = document.getElementById('toggleIcon');
+        
+        if (!header || !collapseElement || !toggleIcon) {
+            console.warn('Elementos do collapse não encontrados');
+            return;
+        }
+
+        header.removeAttribute('data-bs-toggle');
+        header.removeAttribute('data-bs-target');
+        header.removeAttribute('aria-expanded');
+        header.removeAttribute('aria-controls');
+        
+        let isCollapsed = true;
+
+        function toggleCollapse() {
+            if (isCollapsed) {
+                collapseElement.classList.add('show');
+                toggleIcon.classList.remove('bi-chevron-down');
+                toggleIcon.classList.add('bi-chevron-up');
+                header.setAttribute('aria-expanded', 'true');
+                isCollapsed = false;
+            } else {
+                collapseElement.classList.remove('show');
+                toggleIcon.classList.remove('bi-chevron-up');
+                toggleIcon.classList.add('bi-chevron-down');
+                header.setAttribute('aria-expanded', 'false');
+                isCollapsed = true;
+            }
+        }
+
+        header.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleCollapse();
+        });
+        header.setAttribute('aria-expanded', 'false');
+        header.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleCollapse();
+            }
+        });
+        
+        header.setAttribute('tabindex', '0');
+    }
+})();
+</script>
+
+<style>
+#slaHeader {
+    transition: background-color 0.2s ease;
+}
+
+#slaHeader:hover {
+    background-color: #1a1f2b !important;
+}
+
+#slaHeader:focus {
+    outline: 2px solid #ffc107;
+    outline-offset: -2px;
+}
+
+#toggleIcon {
+    transition: transform 0.3s ease;
+    display: inline-block;
+}
+
+#collapseRaioX {
+    transition: height 0.35s ease;
+}
+.border-warning{
+    --bs-border-opacity: 1;
+    border-color: #212529 !important;
+}
+</style>
+
 {% endblock %}
