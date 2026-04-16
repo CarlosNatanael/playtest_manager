@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from app import db
 from app.models import Game, Achievement, TestSession, TestResult, User, GameLog
-from app.services.ra_api import fetch_game_and_achievements
+from app.services.ra_api import get_developer_level, fetch_game_and_achievements
 from datetime import datetime
 import json
 
@@ -67,51 +67,57 @@ def review_session(session_id):
 def import_game():
     if request.method == 'POST':
         game_id = request.form.get('game_id')
-
         if not game_id:
-            flash("Error: Game ID is required.", "danger")
+            flash('Por favor, insira um Game ID.', 'warning')
             return redirect(url_for('manager.import_game'))
-        
-        existing_game = Game.query.get(game_id)
-        if existing_game:
-            flash(f"Warning: The game '{existing_game.title}' is already in the database!", "warning")
+            
+        existing = Game.query.get(game_id)
+        if existing:
+            flash('Este jogo já foi importado!', 'info')
             return redirect(url_for('manager.index'))
-        
-        game_data, error = fetch_game_and_achievements(game_id)
 
-        if error or not game_data:
-            flash(f"API Error: {error or 'Game not found.'}", "danger")
-            return redirect(url_for('manager.import_game'))
+        # A sua função retorna o dicionário completo e o erro (se houver)
+        game_data, erro = fetch_game_and_achievements(game_id)
         
-        dev_level = request.form.get('dev_level', 'Junior')
+        # Se houver erro, mostramos a sua mensagem exata do ra_api.py
+        if erro or not game_data:
+            flash(f"Erro na importação: {erro or 'Dados vazios'}", 'danger')
+            return redirect(url_for('manager.import_game'))
+
+        developer_name = game_data.get('developer', 'Unknown')
+        dev_level_automatico = get_developer_level(developer_name)
 
         new_game = Game(
             id=game_data['id'],
-            title=game_data['title'],
-            developer=game_data['developer'] or 'Unknown',
-            developer_level=dev_level,
-            status='Open',
-            is_collab=game_data.get('is_collab', False),
-            developer_id=game_data.get('developer_id'),
-            developer_pic=game_data.get('developer_pic'),
-            image_icon=game_data.get('image_icon'), 
-            console_name=game_data.get('console_name')
+            title=game_data.get('title', 'Unknown'),
+            developer=developer_name,
+            developer_level=dev_level_automatico,
+            developer_pic=game_data.get('developer_pic', ''),
+            console_name=game_data.get('console_name', 'Unknown'),
+            image_icon=game_data.get('image_icon', ''),
+            is_collab=game_data.get('is_collab', False)
         )
+        
         db.session.add(new_game)
-
-        for ach_data in game_data.get('achievements', []):
+        
+        # Lemos a lista de conquistas que você guardou DENTRO do game_data
+        achievements_list = game_data.get('achievements', [])
+        for ach in achievements_list:
             new_ach = Achievement(
-                id=ach_data['id'],
+                id=ach['id'],
                 game_id=new_game.id,
-                title=ach_data['title'],
-                description=ach_data['description'],
-                points=ach_data['points'],
-                badge_name=ach_data.get('badge_name')
+                title=ach.get('title', 'Unknown'),
+                description=ach.get('description', ''),
+                badge_name=ach.get('badge_name', ''),
+                points=ach.get('points', 0)
             )
             db.session.add(new_ach)
+
+        log = GameLog(game_id=new_game.id, username=session.get('username'), action="Imported the game for playtesting")
+        db.session.add(log)
+
         db.session.commit()
-        
-        flash(f"Success! {new_game.title} imported with {len(game_data.get('achievements', []))} achievements.", "success")
+        flash(f"Jogo '{new_game.title}' importado com sucesso! Nível detetado: {dev_level_automatico}", "success")
         return redirect(url_for('manager.index'))
 
     return render_template('manager/import.html')

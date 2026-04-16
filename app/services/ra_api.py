@@ -96,3 +96,22 @@ def validate_game_hash(game_id, hash_to_check):
         return hash_to_check.lower().strip() in valid_hashes
     except:
         return False
+    
+def get_developer_level(developer_username):
+    url = "https://retroachievements.org/API/API_GetUserClaims.php"
+    params = {
+        "z": current_app.config.get('RA_USERNAME'),
+        "y": current_app.config.get('RA_API_KEY'),
+        "u": developer_username
+    }
+    try:
+        response = requests.get(url, params=params)
+        claims = response.json()
+        
+        if claims and isinstance(claims, list) and len(claims) > 0:
+            is_jr = claims[0].get('UserIsJrDev', 0)
+            return 'JrDev' if is_jr == 1 else 'Dev'
+            
+        return 'Dev'
+    except Exception as e:
+        return 'JrDev'

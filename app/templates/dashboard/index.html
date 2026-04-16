@@ -114,18 +114,24 @@
                                 </div>
                             </div>
                         </td>
-                        
                         <td>
                             <div class="d-flex align-items-center">
-                                <img src="https://media.retroachievements.org{{ game.developer_pic }}" alt="{{ game.developer }}" class="rounded-circle me-2" style="width: 32px; height: 32px; border: 2px solid #ffcc00;" onerror="this.src='https://media.retroachievements.org/UserPic/RetroAchievements.png'">
-                                <span>{{ game.developer }} 
-                                    {% if game.developer_level == 'Junior' %}
-                                        <span class="badge badge-jr ms-1">Jr</span>
+                                <img src="https://media.retroachievements.org{{ game.developer_pic }}" 
+                                     alt="{{ game.developer }}" 
+                                     class="rounded-circle me-2 shadow-sm" 
+                                     style="width: 32px; height: 32px; border: 2px solid {{ '#198754' if game.developer_level == 'JrDev' else '#7819c1' }};" 
+                                     onerror="this.src='https://media.retroachievements.org/UserPic/RetroAchievements.png'">
+                                
+                                <div>
+                                    <span class="d-block text-white">{{ game.developer }}</span>
+                                    {% if game.developer_level == 'JrDev' %}
+                                        <span class="badge badge-jr mt-1" style="font-size: 0.65rem;">Jr. Dev</span>
+                                    {% else %}
+                                        <span class="badge bg-info text-dark mt-1" style="font-size: 0.65rem;">Dev</span>
                                     {% endif %}
-                                </span>
+                                </div>
                             </div>
                         </td>
-                        
                         <td>{{ game.achievements|length }}</td>
                         
                         <td>
@@ -169,4 +175,10 @@
         </div>
     </div>
 </div>
+<style>
+    .bg-info {
+    --bs-bg-opacity: 1;
+    background-color: #7819c1 !important;
+    }
+</style>
 {% endblock %}

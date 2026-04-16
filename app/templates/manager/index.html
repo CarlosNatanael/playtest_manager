@@ -152,13 +152,28 @@
                                     Target Date: <span class="text-white">{{ sess.expires_at.strftime('%b %d, %Y') }}</span>
                                 </small>
                             </div>
-                            <div class="text-end">
+                            <div class="text-end d-flex align-items-center justify-content-end gap-2">
                                 {% if sess.days_remaining != None %}
                                     <span class="badge bg-{{ 'danger' if sess.days_remaining <= 2 else ('warning text-dark' if sess.days_remaining <= 5 else 'success') }} p-2">
                                         <i class="bi bi-alarm"></i> {{ sess.days_remaining }}d Remaining
                                     </span>
                                 {% endif %}
-                                <span class="badge bg-info text-dark p-2 ms-1">{{ game.developer_level }}</span>
+                                
+                                <div class="d-flex align-items-center bg-dark border border-secondary rounded-pill px-2 py-1 ms-1 shadow-sm">
+                                    {% if game.developer_pic %}
+                                        <img src="https://media.retroachievements.org{{ game.developer_pic }}" 
+                                             class="rounded-circle me-2" 
+                                             style="width: 20px; height: 20px; object-fit: cover;" 
+                                             title="Dev: {{ game.developer }}"
+                                             onerror="this.src='https://media.retroachievements.org/UserPic/RetroAchievements.png'">
+                                    {% endif %}
+                                    
+                                    {% if game.developer_level == 'JrDev' %}
+                                        <span class="text-white small" style="font-size: 0.75rem;">Jr. Dev</span>
+                                    {% else %}
+                                        <span class="text-info fw-bold small" style="font-size: 0.75rem;">Full Dev</span>
+                                    {% endif %}
+                                </div>
                             </div>
                         </li>
                     {% endif %}
@@ -181,9 +196,24 @@
                                 <strong class="text-muted">{{ game.title }}</strong> <span class="text-muted small">({{ game.console_name }})</span><br>
                                 <small class="text-muted italic">Waiting for an available tester since {{ game.created_at.strftime('%b %d') }}</small>
                             </div>
-                            <div class="text-end">
+                            <div class="text-end d-flex align-items-center justify-content-end gap-2">
                                 <span class="badge bg-dark border border-secondary text-muted p-2">UNCLAIMED</span>
-                                <span class="badge bg-secondary text-white p-2 ms-1 opacity-50">{{ game.developer_level }}</span>
+
+                                <div class="d-flex align-items-center bg-dark border border-secondary rounded-pill px-2 py-1 ms-1 shadow-sm opacity-75">
+                                    {% if game.developer_pic %}
+                                        <img src="https://media.retroachievements.org{{ game.developer_pic }}" 
+                                             class="rounded-circle me-2" 
+                                             style="width: 20px; height: 20px; object-fit: cover;" 
+                                             title="Dev: {{ game.developer }}"
+                                             onerror="this.src='https://media.retroachievements.org/UserPic/RetroAchievements.png'">
+                                    {% endif %}
+
+                                    {% if game.developer_level == 'JrDev' %}
+                                        <span class="text-white small" style="font-size: 0.75rem;">Jr. Dev</span>
+                                    {% else %}
+                                        <span class="text-info fw-bold small" style="font-size: 0.75rem;">Full Dev</span>
+                                    {% endif %}
+                                </div>
                             </div>
                         </li>
                     {% endif %}
