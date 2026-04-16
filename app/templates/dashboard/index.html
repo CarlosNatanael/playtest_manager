@@ -7,11 +7,11 @@
     <div class="alert alert-dark border-danger d-flex justify-content-between align-items-center mb-4">
         <div>
             <i class="bi bi-shield-lock-fill text-danger fs-4 me-2"></i>
-            <strong class="text-white">Modo Playtester Ativo</strong>
-            <span class="text-muted ms-2">Você está a ver o sistema como um testador comum.</span>
+            <strong class="text-white">Playtester Mode Active</strong>
+            <span class="text-muted ms-2">You are viewing the system as a standard tester.</span>
         </div>
         <a href="{{ url_for('manager.index') }}" class="btn btn-danger fw-bold">
-            Voltar ao Manager <i class="bi bi-arrow-right-circle ms-1"></i>
+            Back to Manager <i class="bi bi-arrow-right-circle ms-1"></i>
         </a>
     </div>
 {% endif %}
@@ -36,7 +36,7 @@
                                         <h5 class="card-title mb-1 text-ra-blue fw-bold text-truncate" style="max-width: 150px;">{{ session.game.title }}</h5>
                                         <div class="d-flex align-items-center text-muted small">
                                             <img src="https://static.retroachievements.org/assets/images/system/{{ session.game.get_console_icon() }}.png" 
-                                                 style="width: 16px; class="me-1">
+                                                 style="width: 16px;" class="me-1">
                                             <span>{{ session.game.console_name }}</span>
                                         </div>
                                     </div>
@@ -112,13 +112,12 @@
                                         <span>{{ game.console_name }}</span>
                                     </div>
                                 </div>
-                                </div>
                             </div>
                         </td>
                         
                         <td>
                             <div class="d-flex align-items-center">
-                                <img src="https://media.retroachievements.org{{ game.developer_pic }}" alt="{{ game.developer }}" class="rounded-circle me-2" style="width: 32px; height: 32px; border: 2px solid #ffcc00;"onerror="this.src='https://media.retroachievements.org/UserPic/RetroAchievements.png'">
+                                <img src="https://media.retroachievements.org{{ game.developer_pic }}" alt="{{ game.developer }}" class="rounded-circle me-2" style="width: 32px; height: 32px; border: 2px solid #ffcc00;" onerror="this.src='https://media.retroachievements.org/UserPic/RetroAchievements.png'">
                                 <span>{{ game.developer }} 
                                     {% if game.developer_level == 'Junior' %}
                                         <span class="badge badge-jr ms-1">Jr</span>
@@ -140,19 +139,19 @@
                             <div class="d-flex gap-2">
                                 <a href="{{ url_for('dashboard.view_game', game_id=game.id) }}" 
                                    class="btn btn-outline-info btn-sm fw-bold">
-                                   View
+                                    View
                                 </a>
                                 
                                 {% if game.id in active_game_ids %}
                                     {% set user_session = active_sessions | selectattr("game_id", "equalto", game.id) | first %}
                                     <a href="{{ url_for('dashboard.test_session', session_id=user_session.id) }}" 
                                        class="btn btn-primary btn-sm fw-bold">
-                                       Continue
+                                        Continue
                                     </a>
                                 {% else %}
                                     <a href="{{ url_for('dashboard.claim_game', game_id=game.id) }}" 
                                        class="btn btn-outline-success btn-sm fw-bold">
-                                       Claim
+                                        Claim
                                     </a>
                                 {% endif %}
                             </div>
