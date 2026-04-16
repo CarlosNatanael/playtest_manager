@@ -1,6 +1,7 @@
 import os
 import json
 from flask import Blueprint, request, render_template, redirect, url_for, flash, session, current_app
+from app.models import User, db
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -29,14 +30,21 @@ def login():
         if username not in users_db:
             flash('Access Denied: Your user is not registered in the team.', 'danger')
             return redirect(url_for('auth.login'))
-            
+        
         user_data = users_db[username]
         if user_data['password'] != password:
             flash('Incorrect password.', 'danger')
             return redirect(url_for('auth.login'))
             
+        user_db = User.query.filter_by(ra_username=username).first()
+        
+        if not user_db:
+            user_db = User(ra_username=username, role=user_data['role'])
+            db.session.add(user_db)
+            db.session.commit()
         session['username'] = username
         session['role'] = user_data['role']
+        session['user_id'] = user_db.id
 
         return redirect_by_role(session['role'])
 

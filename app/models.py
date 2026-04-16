@@ -142,11 +142,6 @@ class TestResult(db.Model):
     trigger_status = db.Column(db.String(20), nullable=True)
     notes = db.Column(db.Text, nullable=True)
     save_state_link = db.Column(db.String(500), nullable=True)
-    
-    trigger_status = db.Column(db.String(20), nullable=True) 
-    notes = db.Column(db.Text, nullable=True)
-    save_state_link = db.Column(db.String(500), nullable=True)
-    
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 def atualizar_cargo_do_usuario(user, permissoes_do_ra):
@@ -171,11 +166,9 @@ class GameLog(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     game = db.relationship('Game', backref=db.backref('logs', lazy=True, cascade="all, delete-orphan"))
 
-from app import db
-
 class UserRole(db.Model):
     __tablename__ = 'user_roles'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     role = db.Column(db.String(50), nullable=False)
