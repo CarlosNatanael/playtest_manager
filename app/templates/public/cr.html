@@ -1,47 +1,69 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="mb-4">
-    <h2 class="text-white">CR Public Review Board</h2>
-    <p class="text-muted small">Real-time set analysis for Code Reviewers.</p>
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <div>
+        <h2 class="text-white"><i class="bi bi-search me-2 text-warning"></i>Code Review Board</h2>
+        <p class="text-muted small">Public registry of active and completed playtest sets.</p>
+    </div>
+    <span class="badge bg-dark border border-secondary p-2"><i class="bi bi-unlock-fill text-muted"></i> Public View</span>
 </div>
 
-<div class="card bg-dark border-secondary">
+<div class="card bg-dark border-secondary shadow-lg">
     <div class="table-responsive">
         <table class="table table-dark table-hover align-middle mb-0">
             <thead>
                 <tr class="text-muted small text-uppercase">
-                    <th class="px-4">Set Name</th>
+                    <th class="px-4">Game & Console</th>
                     <th>Developer</th>
                     <th>Status</th>
-                    <th>Tester Comments & Issues</th>
+                    <th class="text-end px-4">Tester Reports</th>
                 </tr>
             </thead>
             <tbody>
                 {% for game in games %}
                 <tr>
                     <td class="px-4">
-                        <span class="text-ra-blue fw-bold d-block">{{ game.title }}</span>
-                        <small class="text-muted">{{ game.console_name }}</small>
-                    </td>
-                    <td>{{ game.developer }}</td>
-                    <td>
-                        <span class="badge bg-{{ 'success' if game.status == 'Completed' else 'warning' }}">
-                            {{ game.status }}
-                        </span>
-                    </td>
-                    <td>
-                        {% for session in game.test_sessions %}
-                            <div class="border-start border-info ps-2 mb-2">
-                                <small class="d-block text-white"><strong>Tester:</strong> {{ session.tester.ra_username }}</small>
-                                <small class="text-muted italic">{{ session.set_impressions or "No comments yet." }}</small>
-                                {% if session.results %}
-                                    <div class="mt-1">
-                                        <span class="badge bg-danger p-1" style="font-size: 0.6rem;">Issues Found</span>
-                                    </div>
-                                {% endif %}
+                        <div class="d-flex align-items-center">
+                            <img src="https://media.retroachievements.org{{ game.image_icon }}" class="rounded shadow-sm me-3 border border-secondary" style="width: 44px; height: 44px; object-fit: cover;" onerror="this.src='https://media.retroachievements.org/Images/00000.png'">
+                            <div>
+                                <span class="text-white fw-bold d-block">{{ game.title }}</span>
+                                <small class="text-muted">{{ game.console_name }}</small>
                             </div>
-                        {% endfor %}
+                        </div>
                     </td>
+                    <td>
+                        <span class="text-white">{{ game.developer }}</span>
+                        {% if game.developer_level == 'JrDev' %}
+                            <span class="badge bg-secondary ms-1" style="font-size: 0.65rem;">Jr</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if game.status == 'Completed' %}
+                            <span class="badge bg-success-subtle text-success border border-success">Ready for Review</span>
+                        {% elif game.status == 'Re-test' %}
+                            <span class="badge bg-warning-subtle text-warning border border-warning">In Re-test</span>
+                        {% else %}
+                            <span class="badge bg-info-subtle text-info border border-info">Testing</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end px-4">
+                        <div class="d-flex flex-column gap-1 align-items-end">
+                            {% for session in game.test_sessions %}
+                                {% if session.status in ['Active', 'Concluded'] %}
+                                <a href="{{ url_for('public.cr_report', session_id=session.id) }}" class="btn btn-sm btn-outline-info">
+                                    <i class="bi bi-file-earmark-text"></i> {{ session.tester.ra_username }}'s Report
+                                    {% if session.status == 'Active' %}
+                                        <span class="badge bg-dark ms-1">WIP</span>
+                                    {% endif %}
+                                </a>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted py-5">No sets available for review at the moment.</td>
                 </tr>
                 {% endfor %}
             </tbody>
