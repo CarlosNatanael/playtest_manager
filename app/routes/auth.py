@@ -15,12 +15,16 @@ def get_allowed_users():
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    if 'username' in session and 'role' in session:
+
+    if 'username' in session and 'role' in session and 'user_id' in session:
         return redirect_by_role(session['role'])
+    
+    elif 'username' in session:
+        session.clear()
 
     if request.method == 'POST':
         username = request.form.get('username')
-        password = request.form.get('password') 
+        password = request.form.get('password')
 
         if not username or not password:
             flash('Please enter your Username and Password.', 'warning')
@@ -36,15 +40,16 @@ def login():
             flash('Incorrect password.', 'danger')
             return redirect(url_for('auth.login'))
             
-        user_db = User.query.filter_by(ra_username=username).first()
+        user_db_record = User.query.filter_by(ra_username=username).first()
         
-        if not user_db:
-            user_db = User(ra_username=username, role=user_data['role'])
-            db.session.add(user_db)
+        if not user_db_record:
+            user_db_record = User(ra_username=username, role=user_data['role'])
+            db.session.add(user_db_record)
             db.session.commit()
+
         session['username'] = username
         session['role'] = user_data['role']
-        session['user_id'] = user_db.id
+        session['user_id'] = user_db_record.id
 
         return redirect_by_role(session['role'])
 
@@ -61,9 +66,5 @@ def redirect_by_role(role):
         return redirect(url_for('manager.engineer_dashboard'))
     elif role == 'Playtest Manager':
         return redirect(url_for('manager.index'))
-    elif role == 'QA':
-        return redirect(url_for('qa.dashboard'))
-    elif role == 'CR':
-        return redirect(url_for('cr.dashboard'))
     else:
         return redirect(url_for('dashboard.index'))

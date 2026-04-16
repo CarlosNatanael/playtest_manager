@@ -121,7 +121,6 @@ class TestSession(db.Model):
     emulator = db.Column(db.String(100), nullable=True)
     core = db.Column(db.String(100), nullable=True)
     hash_used = db.Column(db.String(100), nullable=True)
-    is_collab = db.Column(db.Boolean, default=False)
     checklist_data = db.Column(db.Text, nullable=True)
     set_impressions = db.Column(db.Text, nullable=True)
     
@@ -132,6 +131,13 @@ class TestSession(db.Model):
     
     # Relacionamento
     results = db.relationship('TestResult', backref='session', lazy=True, cascade="all, delete-orphan")
+
+    @property
+    def days_remaining(self):
+        if self.expires_at:
+            delta = self.expires_at - datetime.utcnow()
+            return delta.days
+        return None
 
 class TestResult(db.Model):
     __tablename__ = 'test_results'
