@@ -2,27 +2,41 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="text-white">QA Manager Dashboard</h2>
-    <div class="d-flex gap-2">
-        <a href="{{ url_for('manager.history') }}" class="btn btn-outline-secondary fw-bold text-white">
-            <i class="bi bi-clock-history"></i> History
-        </a>
-        <a href="{{ url_for('manager.tester_stats') }}" class="btn btn-info text-dark fw-bold">
-            <i class="bi bi-bar-chart-fill"></i> Tester Stats
-        </a>
-        <a href="{{ url_for('manager.import_game') }}" class="btn btn-primary fw-bold">
-            <i class="bi bi-cloud-download"></i> Import Set
-        </a>
+    <div>
+        <h2 class="text-white mb-0">QA Manager Dashboard</h2>
+        <p class="text-muted small">Overview of current playtest sets and team activity.</p>
     </div>
 </div>
 
-<div class="card bg-dark border-secondary">
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('manager.tester_stats') }}" class="btn btn-outline-text-dark fw-bold shadow-sm">
+                <i class="bi bi-bar-chart-fill"></i> Tester Statistics
+            </a>
+            <a href="{{ url_for('manager.history') }}" class="btn btn-outline-text-dark fw-bold shadow-sm">
+                <i class="bi bi-clock-history"></i> Global History
+            </a>
+            <a href="{{ url_for('dashboard.index') }}" class="btn btn-outline-text-dark fw-bold shadow-sm">
+                <i class="bi bi-joystick"></i> My Test Dashboard
+            </a>
+            <a href="{{ url_for('manager.import_game') }}" class="btn btn-outline-text-dark fw-bold shadow-sm">
+                <i class="bi bi-cloud-download"></i> Import Set
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card bg-dark border-secondary shadow-lg">
+    <div class="card-header bg-dark border-secondary py-3">
+        <h6 class="m-0 font-weight-bold text-ra-blue">Active Set Registry</h6>
+    </div>
     <div class="table-responsive">
         <table class="table table-dark table-hover align-middle mb-0">
             <thead>
-                <tr>
-                    <th class="px-4">Game</th>
-                    <th>Status / Tester</th>
+                <tr class="text-muted small text-uppercase">
+                    <th class="px-4" style="width: 40%;">Game & Console</th>
+                    <th>Status / Assigned To</th>
                     <th>Request Date</th>
                     <th class="text-end px-4">Actions</th>
                 </tr>
@@ -32,15 +46,14 @@
                 <tr>
                     <td class="px-4">
                         <div class="d-flex align-items-center">
-                            <img src="https://media.retroachievements.org{{ game.image_icon }}" class="rounded me-3" style="width: 48px; height: 48px; object-fit: cover;">
+                            <img src="https://media.retroachievements.org{{ game.image_icon }}" class="rounded shadow-sm me-3" style="width: 44px; height: 44px; object-fit: cover; border: 1px solid #444;">
                             <div>
-                                <span class="text-ra-blue fw-bold d-block">{{ game.title }}</span>
+                                <span class="text-white fw-bold d-block">{{ game.title }}</span>
                                 <div class="mt-1 d-flex align-items-center text-muted small">
                                     <img src="https://static.retroachievements.org/assets/images/system/{{ game.get_console_icon() }}.png" 
                                          alt="{{ game.console_name }}" 
-                                         style="width: 16px; height: 16px; object-fit: contain;" 
-                                         class="me-1"
-                                         onerror="this.style.display='none'">
+                                         style="width: 14px; height: 14px; object-fit: contain;" 
+                                         class="me-1 opacity-75">
                                     <span>{{ game.console_name }}</span>
                                 </div>
                             </div>
@@ -48,49 +61,51 @@
                     </td>
                     <td>
                         {% if game.status == 'Open' %}
-                            <span class="badge bg-success">Open</span>
-
+                            <span class="badge bg-success-subtle text-success border border-success px-2 py-1">OPEN</span>
                         {% elif game.status == 'In Progress' %}
-                            <span class="badge bg-warning text-dark">In Progress</span>
-
-                            {% if game.is_collab %}
-                                <span class="badge bg-info text-dark ms-1 fw-bold"><i class="bi bi-people-fill"></i> Collab</span>
-                            {% endif %}
-
-                            <div class="mt-1">
-                                <small class="text-muted">by 
+                            <div class="d-inline-flex flex-column">
+                                <span class="badge bg-warning-subtle text-warning border border-warning px-2 py-1 mb-1">IN PROGRESS</span>
+                                {% if game.is_collab %}
+                                    <span class="text-info small fw-bold"><i class="bi bi-people-fill"></i> Collab</span>
+                                {% endif %}
+                                <small class="text-muted mt-1">
+                                    by 
                                     {% set active_sessions = game.test_sessions|selectattr('status', 'equalto', 'Active')|list %}
                                     {% for s in active_sessions %}
-                                        <strong class="text-ra-blue">{{ s.tester.ra_username }}</strong>{% if not loop.last %}, {% endif %}
+                                        <span class="text-ra-blue fw-bold">{{ s.tester.ra_username }}</span>{% if not loop.last %}, {% endif %}
                                     {% else %}
-                                        <strong class="text-ra-blue">Unknown</strong>
+                                        <span class="text-ra-blue">Unassigned</span>
                                     {% endfor %}
                                 </small>
                             </div>
-
                         {% elif game.status == 'Completed' %}
-                            <span class="badge bg-primary">Completed</span>
+                            <span class="badge bg-primary-subtle text-primary border border-primary px-2 py-1">COMPLETED</span>
                         {% endif %}
                     </td>
                     <td>
-                        <div class="small text-white">{{ game.created_at.strftime('%d/%m/%Y') }}</div>
+                        <div class="text-white small">{{ game.created_at.strftime('%b %d, %Y') }}</div>
                         {% set days = (now - game.created_at).days %}
-                        <div class="text-{{ 'danger' if days > 7 else 'muted' }}" style="font-size: 0.75rem;">
+                        <div class="text-{{ 'danger' if days > 7 else 'muted' }} extra-small">
                             {{ days }} days in queue
                         </div>
                     </td>
                     <td class="text-end px-4">
                         <div class="d-flex flex-column gap-1 align-items-end">
-                            {% if game.status == 'In Progress' %}
+                            {% if game.status == 'Open' %}
+                                <a href="{{ url_for('dashboard.view_game', game_id=game.id) }}" class="btn btn-sm btn-outline-success w-100">
+                                    <i class="bi bi-controller"></i> View / Claim
+                                </a>
+                            {% elif game.status == 'In Progress' %}
                                 {% set active_sessions = game.test_sessions|selectattr('status', 'equalto', 'Active')|list %}
                                 {% for s in active_sessions %}
-                                    <a href="{{ url_for('manager.review_session', session_id=s.id) }}" class="btn btn-sm btn-outline-info">
-                                        Review <span class="text-ra-gold">{{ s.tester.ra_username }}</span>
+                                    <a href="{{ url_for('manager.review_session', session_id=s.id) }}" class="btn btn-sm btn-outline-info w-100 mb-1">
+                                        Review <span class="fw-bold">{{ s.tester.ra_username }}</span>
                                     </a>
                                 {% endfor %}
                             {% endif %}
-                            <form action="{{ url_for('manager.delete_game', game_id=game.id) }}" method="POST" class="mt-1" onsubmit="return confirm('Delete game and all test data?')">
-                                <button class="btn btn-sm btn-outline-danger w-100">Delete</button>
+                            
+                            <form action="{{ url_for('manager.delete_game', game_id=game.id) }}" method="POST" class="w-100" onsubmit="return confirm('WARNING: Permanent deletion of all test data. Proceed?')">
+                                <button class="btn btn-sm btn-link text-danger p-0 mt-1" style="font-size: 0.75rem; text-decoration: none;">Delete Set</button>
                             </form>
                         </div>
                     </td>
@@ -101,158 +116,114 @@
     </div>
 </div>
 <br>
-
-<div class="card bg-dark border-warning shadow mb-4">
+<div class="card bg-dark border-warning shadow-sm overflow-hidden">
     <div class="card-header py-3 d-flex justify-content-between align-items-center" 
          id="slaHeader"
-         style="cursor: pointer; background-color: #11141d; user-select: none;"
+         style="cursor: pointer; background-color: #1a1d24;"
          role="button">
         
         <h6 class="m-0 fw-bold text-warning">
-            <i class="bi bi-clock-history me-2"></i> SLA Deadline Overview
-            <small class="text-muted ms-2 fw-normal">
-                <i class="bi bi-chevron-down" id="toggleIcon"></i> Click to expand/collapse
+            <i class="bi bi-shield-check me-2"></i> SLA DEADLINE OVERVIEW
+            <small class="text-muted ms-3 fw-normal">
+                <i class="bi bi-chevron-down" id="toggleIcon"></i> Expand for Details
             </small>
         </h6>
-        <span class="badge bg-warning text-dark text-uppercase">Attention Required</span>
+        <div class="d-flex gap-2">
+            <span class="badge bg-warning text-dark text-uppercase">System Audit</span>
+        </div>
     </div>
 
     <div id="collapseRaioX" class="collapse">
         <div class="card-body bg-dark p-0">
-            <ul class="list-group list-group-flush">
-                {% set contagem_sla = 0 %}
-                
+            <div class="bg-secondary bg-opacity-25 text-warning px-4 py-2 small fw-bold text-uppercase border-bottom border-secondary">
+                <i class="bi bi-activity me-1"></i> Active Testing Sessions
+            </div>
+            <ul class="list-group list-group-flush mb-0">
+                {% set contagem_ativos = 0 %}
                 {% for game in games %}
                     {% set sess = active_sessions_map.get(game.id) %}
-                    
                     {% if sess and sess.expires_at %}
-                        {% set contagem_sla = contagem_sla + 1 %}
-                        
-                        <li class="list-group-item bg-dark text-white d-flex justify-content-between align-items-center px-4 py-3 border-secondary">
+                        {% set contagem_ativos = contagem_ativos + 1 %}
+                        <li class="list-group-item bg-dark text-white d-flex justify-content-between align-items-center px-4 py-3 border-secondary border-opacity-50">
                             <div>
                                 <strong class="text-ra-blue">{{ game.title }}</strong> <span class="text-muted small">({{ game.console_name }})</span><br>
-                                <small class="text-light">
-                                    Tester: <span class="fw-bold">{{ sess.tester.ra_username }}</span> | 
-                                    Deadline: {{ sess.expires_at.strftime('%d/%m/%Y') }}
+                                <small class="text-muted">
+                                    Lead Tester: <span class="text-white">{{ sess.tester.ra_username }}</span> | 
+                                    Target Date: <span class="text-white">{{ sess.expires_at.strftime('%b %d, %Y') }}</span>
                                 </small>
                             </div>
-                            
                             <div class="text-end">
                                 {% if sess.days_remaining != None %}
-                                    {% if sess.days_remaining <= 2 %}
-                                        <span class="badge bg-danger p-2"><i class="bi bi-exclamation-circle"></i> {{ sess.days_remaining }} days left</span>
-                                    {% elif sess.days_remaining <= 5 %}
-                                        <span class="badge bg-warning text-dark p-2"><i class="bi bi-exclamation-triangle"></i> {{ sess.days_remaining }} days left</span>
-                                    {% else %}
-                                        <span class="badge bg-success p-2"><i class="bi bi-check-circle"></i> {{ sess.days_remaining }} days left</span>
-                                    {% endif %}
-                                {% else %}
-                                    <span class="badge bg-secondary p-2">No deadline</span>
+                                    <span class="badge bg-{{ 'danger' if sess.days_remaining <= 2 else ('warning text-dark' if sess.days_remaining <= 5 else 'success') }} p-2">
+                                        <i class="bi bi-alarm"></i> {{ sess.days_remaining }}d Remaining
+                                    </span>
                                 {% endif %}
-                                
                                 <span class="badge bg-info text-dark p-2 ms-1">{{ game.developer_level }}</span>
                             </div>
                         </li>
                     {% endif %}
                 {% endfor %}
-                
-                {% if contagem_sla == 0 %}
-                    <div class="p-4 text-center text-muted">
-                        <i class="bi bi-check2-circle fs-3 d-block mb-2"></i>
-                        No games with active deadlines at the moment.
-                    </div>
+                {% if contagem_ativos == 0 %}
+                    <div class="p-4 text-center text-muted small">No active testing sessions found.</div>
+                {% endif %}
+            </ul>
+        
+            <div class="bg-secondary bg-opacity-10 text-muted px-4 py-2 small fw-bold text-uppercase border-top border-bottom border-secondary">
+                <i class="bi bi-list-stars me-1"></i> Open Queue (Waiting for Claim)
+            </div>
+            <ul class="list-group list-group-flush">
+                {% set contagem_fila = 0 %}
+                {% for game in games %}
+                    {% if game.status == 'Open' %}
+                        {% set contagem_fila = contagem_fila + 1 %}
+                        <li class="list-group-item bg-dark text-white d-flex justify-content-between align-items-center px-4 py-3 border-secondary border-opacity-50">
+                            <div>
+                                <strong class="text-muted">{{ game.title }}</strong> <span class="text-muted small">({{ game.console_name }})</span><br>
+                                <small class="text-muted italic">Waiting for an available tester since {{ game.created_at.strftime('%b %d') }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-dark border border-secondary text-muted p-2">UNCLAIMED</span>
+                                <span class="badge bg-secondary text-white p-2 ms-1 opacity-50">{{ game.developer_level }}</span>
+                            </div>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                {% if contagem_fila == 0 %}
+                    <div class="p-4 text-center text-muted small">Queue is currently empty.</div>
                 {% endif %}
             </ul>
         </div>
     </div>
 </div>
-
-<!-- SCRIPT DE CORREÇÃO DO COLLAPSE -->
-<script>
-(function() {
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initCollapse);
-    } else {
-        initCollapse();
-    }
-    
-    function initCollapse() {
-        const header = document.getElementById('slaHeader');
-        const collapseElement = document.getElementById('collapseRaioX');
-        const toggleIcon = document.getElementById('toggleIcon');
-        
-        if (!header || !collapseElement || !toggleIcon) {
-            console.warn('Elementos do collapse não encontrados');
-            return;
-        }
-
-        header.removeAttribute('data-bs-toggle');
-        header.removeAttribute('data-bs-target');
-        header.removeAttribute('aria-expanded');
-        header.removeAttribute('aria-controls');
-        
-        let isCollapsed = true;
-
-        function toggleCollapse() {
-            if (isCollapsed) {
-                collapseElement.classList.add('show');
-                toggleIcon.classList.remove('bi-chevron-down');
-                toggleIcon.classList.add('bi-chevron-up');
-                header.setAttribute('aria-expanded', 'true');
-                isCollapsed = false;
-            } else {
-                collapseElement.classList.remove('show');
-                toggleIcon.classList.remove('bi-chevron-up');
-                toggleIcon.classList.add('bi-chevron-down');
-                header.setAttribute('aria-expanded', 'false');
-                isCollapsed = true;
-            }
-        }
-
-        header.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            toggleCollapse();
-        });
-        header.setAttribute('aria-expanded', 'false');
-        header.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                toggleCollapse();
-            }
-        });
-        
-        header.setAttribute('tabindex', '0');
-    }
-})();
-</script>
-
+<br>
 <style>
-#slaHeader {
-    transition: background-color 0.2s ease;
-}
-
-#slaHeader:hover {
-    background-color: #1a1f2b !important;
-}
-
-#slaHeader:focus {
-    outline: 2px solid #ffc107;
-    outline-offset: -2px;
-}
-
-#toggleIcon {
-    transition: transform 0.3s ease;
-    display: inline-block;
-}
-
-#collapseRaioX {
-    transition: height 0.35s ease;
-}
-.border-warning{
+.extra-small { font-size: 0.7rem; }
+.text-ra-gold { color: #ffd700; }
+#slaHeader { transition: background-color 0.15s ease-in-out; }
+#slaHeader:hover { background-color: #252a33 !important; }
+.italic { font-style: italic; }
+.border-warning {
     --bs-border-opacity: 1;
     border-color: #212529 !important;
 }
 </style>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const header = document.getElementById('slaHeader');
+    const collapse = document.getElementById('collapseRaioX');
+    const icon = document.getElementById('toggleIcon');
+    
+    header.addEventListener('click', () => {
+        const isShown = collapse.classList.contains('show');
+        if(isShown) {
+            collapse.classList.remove('show');
+            icon.classList.replace('bi-chevron-up', 'bi-chevron-down');
+        } else {
+            collapse.classList.add('show');
+            icon.classList.replace('bi-chevron-down', 'bi-chevron-up');
+        }
+    });
+});
+</script>
 {% endblock %}

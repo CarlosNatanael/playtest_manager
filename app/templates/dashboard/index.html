@@ -3,6 +3,18 @@
 {% block title %}Dashboard | Playtester{% endblock %}
 
 {% block content %}
+{% if session.get('role') in ['Playtest Manager', 'Engineer'] %}
+    <div class="alert alert-dark border-danger d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <i class="bi bi-shield-lock-fill text-danger fs-4 me-2"></i>
+            <strong class="text-white">Modo Playtester Ativo</strong>
+            <span class="text-muted ms-2">Você está a ver o sistema como um testador comum.</span>
+        </div>
+        <a href="{{ url_for('manager.index') }}" class="btn btn-danger fw-bold">
+            Voltar ao Manager <i class="bi bi-arrow-right-circle ms-1"></i>
+        </a>
+    </div>
+{% endif %}
 <div class="row mb-4">
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-4">

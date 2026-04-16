@@ -83,7 +83,7 @@ def import_game():
             flash(f"API Error: {error or 'Game not found.'}", "danger")
             return redirect(url_for('manager.import_game'))
         
-        dev_level = 'Junior'
+        dev_level = request.form.get('dev_level', 'Junior')
 
         new_game = Game(
             id=game_data['id'],
@@ -119,7 +119,7 @@ def import_game():
 
 @manager_bp.route('/stats')
 def tester_stats():
-    testers = User.query.filter_by(role='playtester').all()
+    testers = User.query.all()
     stats_data = []
     
     for tester in testers:
