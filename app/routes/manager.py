@@ -68,20 +68,18 @@ def import_game():
     if request.method == 'POST':
         game_id = request.form.get('game_id')
         if not game_id:
-            flash('Por favor, insira um Game ID.', 'warning')
+            flash('Please enter a Game ID.', 'warning')
             return redirect(url_for('manager.import_game'))
             
         existing = Game.query.get(game_id)
         if existing:
-            flash('Este jogo já foi importado!', 'info')
+            flash('This game has already been imported!', 'info')
             return redirect(url_for('manager.index'))
 
-        # A sua função retorna o dicionário completo e o erro (se houver)
         game_data, erro = fetch_game_and_achievements(game_id)
         
-        # Se houver erro, mostramos a sua mensagem exata do ra_api.py
         if erro or not game_data:
-            flash(f"Erro na importação: {erro or 'Dados vazios'}", 'danger')
+            flash(f"Import error: {erro or 'Empty data'}", 'danger')
             return redirect(url_for('manager.import_game'))
 
         developer_name = game_data.get('developer', 'Unknown')
@@ -100,7 +98,6 @@ def import_game():
         
         db.session.add(new_game)
         
-        # Lemos a lista de conquistas que você guardou DENTRO do game_data
         achievements_list = game_data.get('achievements', [])
         for ach in achievements_list:
             new_ach = Achievement(
@@ -117,7 +114,7 @@ def import_game():
         db.session.add(log)
 
         db.session.commit()
-        flash(f"Jogo '{new_game.title}' importado com sucesso! Nível detetado: {dev_level_automatico}", "success")
+        flash(f"Game '{new_game.title}' imported successfully! Level detected: {dev_level_automatico}", "success")
         return redirect(url_for('manager.index'))
 
     return render_template('manager/import.html')

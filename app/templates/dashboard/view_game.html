@@ -18,11 +18,11 @@
                 <div>
                 {% if session.get('role') in ['Playtest Manager', 'Engineer'] %}
                     <a href="{{ url_for('manager.index') }}" class="btn btn-secondary fw-bold">
-                        <i class="bi bi-arrow-left"></i> Voltar ao Manager
+                        <i class="bi bi-arrow-left"></i> Back to Manager
                     </a>
                 {% else %}
                     <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary fw-bold">
-                        <i class="bi bi-arrow-left"></i> Voltar ao Dashboard
+                        <i class="bi bi-arrow-left"></i> Back to Dashboard
                     </a>
                 {% endif %}
                     <a href="{{ url_for('dashboard.claim_game', game_id=game.id) }}" class="btn btn-success fw-bold">Claim for Testing</a>
