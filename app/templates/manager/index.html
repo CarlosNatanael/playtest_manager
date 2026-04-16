@@ -98,5 +98,55 @@
             </tbody>
         </table>
     </div>
+<div class="card shadow mb-4 border-left-warning">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-clock"></i> Raio-X de Prazos (SLA)
+        </h6>
+        <span class="badge badge-warning">Atenção Necessária</span>
+    </div>
+    <div class="card-body">
+        <ul class="list-group list-group-flush">
+            {% set contagem_sla = 0 %}
+            
+            {% for game in games %}
+                {% set sess = active_sessions_map.get(game.id) %}
+                
+                {% if sess and sess.expires_at %}
+                    {% set contagem_sla = contagem_sla + 1 %}
+                    
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <div>
+                            <strong>{{ game.title }}</strong> <span class="text-muted">({{ game.console_name }})</span><br>
+                            <small class="text-muted">
+                                Tester: {{ sess.tester.ra_username }} | Prazo: {{ sess.expires_at.strftime('%d/%m/%Y') }}
+                            </small>
+                        </div>
+                        
+                        <div class="text-right">
+                            {% if sess.days_remaining != None %}
+                                {% if sess.days_remaining <= 2 %}
+                                    <span class="badge badge-danger p-2"><- {{ sess.days_remaining }} dias</span>
+                                {% elif sess.days_remaining <= 5 %}
+                                    <span class="badge badge-warning p-2"><- {{ sess.days_remaining }} dias</span>
+                                {% else %}
+                                    <span class="badge badge-success p-2"><- {{ sess.days_remaining }} dias</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge badge-secondary p-2">Sem prazo</span>
+                            {% endif %}
+                            
+                            <span class="badge badge-info p-2 ml-1">{{ game.developer_level }}</span>
+                        </div>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if contagem_sla == 0 %}
+                <p class="text-muted text-center my-3">Nenhum jogo com prazo ativo no momento.</p>
+            {% endif %}
+        </ul>
+    </div>
+</div>
 </div>
 {% endblock %}
