@@ -7,12 +7,18 @@
     <div class="alert alert-dark border-danger d-flex justify-content-between align-items-center mb-4">
         <div>
             <i class="bi bi-shield-lock-fill text-danger fs-4 me-2"></i>
-            <strong class="text-white">Playtester Mode Active</strong>
-            <span class="text-muted ms-2">You are viewing the system as a standard tester.</span>
+            <strong class="text-white">Admin Mode Active</strong>
         </div>
-        <a href="{{ url_for('manager.index') }}" class="btn btn-danger fw-bold">
-            Back to Manager <i class="bi bi-arrow-right-circle ms-1"></i>
-        </a>
+        <div>
+            {% if session.get('role') == 'Engineer' %}
+                <a href="{{ url_for('manager.engineer_dashboard') }}" class="btn btn-outline-info fw-bold me-2">
+                    Back to Engineer
+                </a>
+            {% endif %}
+            <a href="{{ url_for('manager.index') }}" class="btn btn-danger fw-bold">
+                Back to Manager <i class="bi bi-arrow-right-circle ms-1"></i>
+            </a>
+        </div>
     </div>
 {% endif %}
 <div class="row mb-4">

@@ -6,11 +6,19 @@
         <h2 class="text-white mb-0">QA Manager Dashboard</h2>
         <p class="text-muted small">Overview of current playtest sets and team activity.</p>
     </div>
+    {% if session.get('role') == 'Engineer' %}
+        <a href="{{ url_for('manager.engineer_dashboard') }}" class="btn btn-info fw-bold shadow-sm">
+            <i class="bi bi-gear-wide-connected"></i> Engineer Center
+        </a>
+    {% endif %}
 </div>
 
 <div class="row mb-4">
     <div class="col-md-12">
         <div class="d-flex gap-2">
+            <a href="{{ url_for('manager.manage_team') }}" class="btn btn-outline-text-dark fw-bold shadow-sm">
+                <i class="bi bi-people-fill"></i> Team
+            </a>
             <a href="{{ url_for('manager.tester_stats') }}" class="btn btn-outline-text-dark fw-bold shadow-sm">
                 <i class="bi bi-bar-chart-fill"></i> Tester Statistics
             </a>
@@ -19,9 +27,6 @@
             </a>
             <a href="{{ url_for('dashboard.index') }}" class="btn btn-outline-text-dark fw-bold shadow-sm">
                 <i class="bi bi-joystick"></i> My Test Dashboard
-            </a>
-            <a href="{{ url_for('manager.import_game') }}" class="btn btn-outline-text-dark fw-bold shadow-sm">
-                <i class="bi bi-cloud-download"></i> Import Set
             </a>
         </div>
     </div>

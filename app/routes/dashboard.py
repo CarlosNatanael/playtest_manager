@@ -229,3 +229,12 @@ def validate_hash(session_id):
     except Exception as e:
         print(f"ERRO NO VALIDADOR DE HASH: {e}")
         return jsonify({'error': 'An internal error occurred while trying to validate the hash. Please try again later.'}), 500
+    
+@dashboard_bp.route('/engineer')
+def engineer_dashboard():
+    if session.get('role') != 'Engineer':
+        flash('Access Denied: This area is exclusive to the Bot_Playtest', 'danger')
+        if session.get('role') == 'Playtest Manager':
+            return redirect(url_for('manager.index'))
+        return redirect(url_for('dashboard.index'))
+    return render_template('manager/engineer.html')

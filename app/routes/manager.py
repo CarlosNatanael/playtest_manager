@@ -1,11 +1,77 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from app import db
 from app.models import Game, Achievement, TestSession, TestResult, User, GameLog
 from app.services.ra_api import get_developer_level, fetch_game_and_achievements
+from werkzeug.security import generate_password_hash
+from flask import current_app
 from datetime import datetime
+from app import db
 import json
+import os
 
 manager_bp = Blueprint('manager', __name__)
+
+def get_allowed_users_path():
+    return os.path.join(current_app.instance_path, 'allowed_users.json')
+
+@manager_bp.route('/team', methods=['GET', 'POST'])
+def manage_team():
+    file_path = get_allowed_users_path()
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            users_db = json.load(f)
+    except FileNotFoundError:
+        users_db = {}
+
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        role = request.form.get('role')
+
+        if not username or not password or not role:
+            flash('All fields are required!', 'warning')
+            return redirect(url_for('manager.manage_team'))
+
+        if username in users_db:
+            flash(f'User {username} already exists.', 'danger')
+            return redirect(url_for('manager.manage_team'))
+
+        hashed_password = generate_password_hash(password)
+
+        users_db[username] = {
+            'password': hashed_password,
+            'role': role
+        }
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(users_db, f, indent=4)
+
+        flash(f'User {username} successfully added to the team!', 'success')
+        return redirect(url_for('manager.manage_team'))
+
+    return render_template('manager/team.html', users=users_db)
+
+@manager_bp.route('/team/delete/<username>', methods=['POST'])
+def delete_user(username):
+    file_path = get_allowed_users_path()
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            users_db = json.load(f)
+            
+        if username in users_db:
+            if username == session.get('username'):
+                flash('You cannot delete your own Manager account!', 'danger')
+            elif username.lower() == 'bot':
+                flash('The System Bot is protected and cannot be removed.', 'warning')
+            else:
+                del users_db[username]
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    json.dump(users_db, f, indent=4)
+                flash(f'Access for {username} has been revoked.', 'info')
+                
+    except Exception as e:
+        flash(f'Error removing user: {e}', 'danger')
+
+    return redirect(url_for('manager.manage_team'))
 
 @manager_bp.route('/')
 def index():
@@ -21,6 +87,11 @@ def index():
 
 @manager_bp.route('/engineer')
 def engineer_dashboard():
+    if session.get('role') != 'Engineer':
+        flash('Access Denied: This area is exclusive to the Bot_Playtest', 'danger')
+        if session.get('role') == 'Playtest Manager':
+            return redirect(url_for('manager.index'))
+        return redirect(url_for('dashboard.index'))
     return render_template('manager/engineer.html')
 
 @manager_bp.route('/history')

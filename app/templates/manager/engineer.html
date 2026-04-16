@@ -1,23 +1,107 @@
-{% extends "base.html" %}
-
-{% block title %}Engineer Dashboard - Playtest Manager{% endblock %}
+{% extends 'base.html' %}
 
 {% block content %}
-<div class="container mt-5 d-flex flex-column align-items-center">
-    
-    <div class="card shadow p-5 text-center" style="max-width: 600px; width: 100%;">
-        <h1 class="text-primary mb-3">Painel do Engineer</h1>
-        
-        <p class="lead mb-4">
-            Bem-vindo, <strong>{{ session.get('username') }}</strong>! Você tem acesso de nível sistema.
-        </p>
-        
-        <hr class="w-100 mb-4">
+<div class="mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="text-white mb-0"><i class="bi bi-gear-wide-connected text-info me-2"></i>Engineer Command Center</h2>
+            <p class="text-muted small">System automation, bot operations, and direct access controls.</p>
+        </div>
+        <div class="badge bg-primary border border-info p-2 px-3 shadow-sm">
+            <i class="bi bi-robot me-1"></i> Mode: System Automator
+        </div>
+    </div>
+</div>
 
-        <a href="{{ url_for('auth.logout') }}" class="btn btn-danger btn-lg font-weight-bold w-100">
-            Sair do Sistema
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <a href="{{ url_for('manager.index') }}" class="card bg-dark border-secondary text-decoration-none shadow-sm h-100 hover-card">
+            <div class="card-body text-center p-4">
+                <i class="bi bi-shield-lock text-danger fs-1 mb-3 d-block"></i>
+                <h5 class="text-white mb-1">QA Manager</h5>
+                <p class="text-muted small mb-0">Control sets, re-tests, and team oversight.</p>
+            </div>
         </a>
     </div>
-
+    <div class="col-md-4">
+        <a href="{{ url_for('dashboard.index') }}" class="card bg-dark border-secondary text-decoration-none shadow-sm h-100 hover-card">
+            <div class="card-body text-center p-4">
+                <i class="bi bi-joystick text-ra-blue fs-1 mb-3 d-block"></i>
+                <h5 class="text-white mb-1">Tester Dashboard</h5>
+                <p class="text-muted small mb-0">Switch to playtester view and ongoing sessions.</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="{{ url_for('manager.import_game') }}" class="card bg-dark border-secondary text-decoration-none shadow-sm h-100 hover-card">
+            <div class="card-body text-center p-4">
+                <i class="bi bi-cloud-download text-success fs-1 mb-3 d-block"></i>
+                <h5 class="text-white mb-1">Import New Set</h5>
+                <p class="text-muted small mb-0">Fetch data directly from RetroAchievements API.</p>
+            </div>
+        </a>
+    </div>
 </div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card bg-dark border-secondary shadow-sm mb-4">
+            <div class="card-header bg-dark border-secondary d-flex justify-content-between align-items-center">
+                <h6 class="m-0 fw-bold text-info"><i class="bi bi-terminal-fill me-2"></i>System Tasks</h6>
+                <span class="badge bg-black border border-secondary text-muted">V 1.2.0</span>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item bg-dark border-secondary py-3 d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-white d-block">API Sync Status</span>
+                            <small class="text-muted">Connection with RetroAchievements.org</small>
+                        </div>
+                        <span class="badge bg-success-subtle text-success border border-success px-3">Stable</span>
+                    </li>
+                    <li class="list-group-item bg-dark border-secondary py-3 d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-white d-block">Database Integrity</span>
+                            <small class="text-muted">Check for orphan sessions or logs</small>
+                        </div>
+                        <button class="btn btn-sm btn-outline-info">Run Maintenance</button>
+                    </li>
+                    <li class="list-group-item bg-dark border-secondary py-3 d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-white d-block">Bot Activity Logs</span>
+                            <small class="text-muted">Last automated action: Set Import #21403</small>
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary">View Logs</button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card bg-dark border-info shadow-sm">
+            <div class="card-body">
+                <h6 class="text-info fw-bold mb-3"><i class="bi bi-info-circle-fill me-2"></i>Engineer Note</h6>
+                <p class="text-muted small">
+                    This area is restricted to system maintainers. Actions performed here might skip standard validation checks. 
+                    Use the <strong>QA Manager</strong> view for everyday testing logistics.
+                </p>
+                <hr class="border-secondary">
+                <div class="d-grid">
+                    <button class="btn btn-outline-warning btn-sm fw-bold"><i class="bi bi-bug"></i> Debug System State</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.hover-card { transition: all 0.2s ease-in-out; }
+.hover-card:hover { 
+    transform: translateY(-5px); 
+    border-color: #0dcaf0 !important; 
+    background-color: #1a1d24 !important;
+}
+.text-ra-blue { color: #00acee; }
+</style>
 {% endblock %}
