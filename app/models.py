@@ -143,10 +143,6 @@ class TestResult(db.Model):
     notes = db.Column(db.Text, nullable=True)
     save_state_link = db.Column(db.String(500), nullable=True)
     
-    trigger_status = db.Column(db.String(20), nullable=True) 
-    notes = db.Column(db.Text, nullable=True)
-    save_state_link = db.Column(db.String(500), nullable=True)
-    
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 def atualizar_cargo_do_usuario(user, permissoes_do_ra):
