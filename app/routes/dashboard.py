@@ -196,10 +196,14 @@ def autosave(session_id):
             result = TestResult(session_id=test_session.id, achievement_id=ach_id)
             db.session.add(result)
         
-        if 'status' in data: 
+        if 'status' in data:
             new_status = data['status']
-            if result.trigger_status and result.trigger_status != 'OK' and new_status == 'OK':
+            # Guarda o erro original quando o tester marca Retest OK
+            if result.trigger_status in ['FALSE_TRIGGER', 'NO_TRIGGER'] and new_status == 'OK_AFTER_RETEST':
                 result.previous_status = result.trigger_status
+            # Limpa o histórico se trocar de volta para erro (caso o tester tenha clicado sem querer)
+            elif new_status in ['FALSE_TRIGGER', 'NO_TRIGGER', 'OK']:
+                result.previous_status = None
                 
             result.trigger_status = new_status
         if 'note' in data: result.notes = data['note']

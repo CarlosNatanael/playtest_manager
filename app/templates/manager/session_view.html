@@ -91,18 +91,34 @@
                     <div>
                         <h6 class="mb-0 text-white">{{ result.achievement.title }}</h6>
                         <div class="mt-1">
-                            {% if result.previous_status and result.trigger_status == 'OK_AFTER_RETEST' %}
-                                <span class="badge bg-danger opacity-75 text-decoration-line-through">{{ result.previous_status|replace('_', ' ') }}</span>
-                                <i class="bi bi-arrow-right text-muted mx-1"></i>
-                                <span class="badge bg-success">RETEST OK</span>
+                            {% if result.previous_status %}
+                                <button type="button" class="btn btn-link text-decoration-none p-0 m-0 shadow-none border-0 text-start" onclick="document.getElementById('log-{{ result.id }}').classList.toggle('d-none')">
+                                    <span class="badge bg-success me-1">RETEST OK</span>
+                                    <small class="text-muted text-decoration-underline">(See history)</small>
+                                </button>
+                                
+                                <div id="log-{{ result.id }}" class="d-none mt-2">
+                                    <div class="d-inline-block p-2 bg-black rounded border border-secondary">
+                                        <small class="text-white">
+                                            <i class="bi bi-clock-history me-1 text-info"></i>
+                                            History: <span class="text-danger text-decoration-line-through">{{ result.previous_status|replace('_', ' ') }}</span> 
+                                            <i class="bi bi-arrow-right mx-1 text-muted"></i> 
+                                            <span class="text-success fw-bold">RETEST OK</span>
+                                        </small>
+                                    </div>
+                                </div>
+                                
                             {% elif result.trigger_status == 'OK' %}
                                 <span class="badge bg-success">OK</span>
-                            {% elif result.trigger_status in ['FALSE_TRIGGER', 'NO_TRIGGER'] %}
-                                <span class="badge bg-danger">{{ result.trigger_status|replace('_', ' ') }}</span>
+                                
                             {% elif result.trigger_status == 'OK_AFTER_RETEST' %}
                                 <span class="badge bg-success border border-light">RETEST OK</span>
+                                
+                            {% elif result.trigger_status in ['FALSE_TRIGGER', 'NO_TRIGGER'] %}
+                                <span class="badge bg-danger">{{ result.trigger_status|replace('_', ' ') }}</span>
+                                
                             {% else %}
-                                <span class="badge bg-warning text-dark">{{ result.trigger_status or 'UNTESTED' }}</span>
+                                <span class="badge bg-warning text-dark">{{ (result.trigger_status|replace('_', ' ')) if result.trigger_status else 'UNTESTED' }}</span>
                             {% endif %}
                         </div>
                     </div>
