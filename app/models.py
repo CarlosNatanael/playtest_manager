@@ -6,11 +6,10 @@ class User(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     ra_username = db.Column(db.String(100), unique=True, nullable=False)
-    discord_id = db.Column(db.String(100), unique=True, nullable=True) # Caso precise no futuro
-    role = db.Column(db.String(20), default='playtester') # playtester, cr, manager
+    discord_id = db.Column(db.String(100), unique=True, nullable=True)
+    role = db.Column(db.String(20), default='playtester')
     is_active = db.Column(db.Boolean, default=True)
     
-    # Relacionamento: Um usuário pode ter várias sessões de teste
     sessions = db.relationship('TestSession', backref='tester', lazy=True)
 
 class Game(db.Model):
@@ -27,8 +26,6 @@ class Game(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_collab = db.Column(db.Boolean, default=False)
     collab_locked = db.Column(db.Boolean, default=False)
-    image_icon = db.Column(db.String(100), nullable=True)
-    console_name = db.Column(db.String(100), nullable=True)
     
     achievements = db.relationship('Achievement', backref='game', lazy=True, cascade="all, delete-orphan")
     test_sessions = db.relationship('TestSession', backref='game', lazy=True, cascade="all, delete-orphan")
@@ -101,14 +98,13 @@ class Game(db.Model):
 class Achievement(db.Model):
     __tablename__ = 'achievements'
     
-    id = db.Column(db.Integer, primary_key=True) # ID oficial da conquista no RA
+    id = db.Column(db.Integer, primary_key=True)
     game_id = db.Column(db.Integer, db.ForeignKey('games.id'), nullable=False)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=False)
     badge_name = db.Column(db.String(50))
     points = db.Column(db.Integer, default=0)
     
-    # Relacionamento com os resultados
     results = db.relationship('TestResult', backref='achievement', lazy=True)
 
 class TestSession(db.Model):
@@ -125,12 +121,11 @@ class TestSession(db.Model):
     checklist_data = db.Column(db.Text, nullable=True)
     set_impressions = db.Column(db.Text, nullable=True)
     
-    status = db.Column(db.String(20), default='Active') # Active, Concluded, Abandoned
+    status = db.Column(db.String(20), default='Active')
     concluded_at = db.Column(db.DateTime, nullable=True) 
     expires_at = db.Column(db.DateTime, nullable=True)
     started_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Relacionamento
     results = db.relationship('TestResult', backref='session', lazy=True, cascade="all, delete-orphan")
 
     @property
@@ -151,18 +146,6 @@ class TestResult(db.Model):
     save_state_link = db.Column(db.String(500), nullable=True)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-def atualizar_cargo_do_usuario(user, permissoes_do_ra):
-    
-    if 'Playtest Manager' in permissoes_do_ra or 'Quality Assurance' in permissoes_do_ra:
-        user.role = 'manager'  # Acesso total, importa jogos
-    elif 'Code Reviewer' in permissoes_do_ra:
-        user.role = 'cr'       # Acesso ao painel de raio-x
-    elif 'Play Tester' in permissoes_do_ra:
-        user.role = 'playtester' # Acesso ao dashboard de testes
-    else:
-        user.role = 'bloqueado'  # Usuário comum do RA que não faz parte da equipe
-    db.session.commit()
-
 class GameLog(db.Model):
     __tablename__ = 'game_logs'
 
@@ -172,10 +155,3 @@ class GameLog(db.Model):
     action = db.Column(db.String(200), nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     game = db.relationship('Game', backref=db.backref('logs', lazy=True, cascade="all, delete-orphan"))
-
-class UserRole(db.Model):
-    __tablename__ = 'user_roles'
-
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True, nullable=False)
-    role = db.Column(db.String(50), nullable=False)

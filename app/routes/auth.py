@@ -1,7 +1,8 @@
-import os
-import json
 from flask import Blueprint, request, render_template, redirect, url_for, flash, session, current_app
+from werkzeug.security import check_password_hash
 from app.models import User, db
+import json
+import os
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -36,7 +37,15 @@ def login():
             return redirect(url_for('auth.login'))
         
         user_data = users_db[username]
-        if user_data['password'] != password:
+        stored_password = user_data['password']
+        
+        is_valid_password = False
+        if stored_password.startswith('scrypt:') or stored_password.startswith('pbkdf2:'):
+            is_valid_password = check_password_hash(stored_password, password)
+        else:
+            is_valid_password = (stored_password == password)
+
+        if not is_valid_password:
             flash('Incorrect password.', 'danger')
             return redirect(url_for('auth.login'))
             

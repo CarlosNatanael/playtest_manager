@@ -1,5 +1,6 @@
 from flask import Blueprint, redirect, url_for, session, render_template
-from app.models import Game
+from app.models import Game, TestSession
+import json
 
 public_bp = Blueprint('public', __name__)
 
@@ -12,12 +13,6 @@ def index():
     else:
         return redirect(url_for('dashboard.index'))
     
-import json
-from flask import Blueprint, render_template
-from app.models import Game, TestSession
-
-public_bp = Blueprint('public', __name__)
-
 @public_bp.route('/cr-board')
 def cr_board():
     games = Game.query.filter(Game.status.in_(['In Progress', 'Completed', 'Re-test'])).order_by(Game.created_at.desc()).all()

@@ -65,10 +65,10 @@ def claim_game(game_id):
         flash("This Collab has reached its maximum capacity (4 Testers).", "warning")
         return redirect(url_for('dashboard.index'))
 
-    if game.status != 'Open' and not (game.is_collab and not game.collab_locked):
+    # Adicionado 'Re-test' para permitir que o tester pegue o jogo novamente
+    if game.status not in ['Open', 'Re-test'] and not (game.is_collab and not game.collab_locked):
         flash("This test is currently closed to new participants.", "warning")
         return redirect(url_for('dashboard.index'))
-    
 
     new_session = TestSession(
         user_id=user_id,
@@ -126,17 +126,20 @@ def test_session(session_id):
                            collab_partners=collab_partners, 
                            is_owner=is_owner)
 
-
 @dashboard_bp.route('/session/save/<int:session_id>', methods=['POST'])
 def save_session(session_id):
     test_session = TestSession.query.get_or_404(session_id)
+    
+    # SEGURANÇA: Validar Posse (Ownership)
+    if test_session.user_id != session.get('user_id'):
+        flash("Access Denied: You cannot modify someone else's session.", "danger")
+        return redirect(url_for('dashboard.index'))
+        
     data = request.form
     
-    # Save header data
     test_session.core = data.get('core')
     test_session.hash_used = data.get('hash_used')
     
-    # Process each achievement
     for ach in test_session.game.achievements:
         status = data.get(f'ach_{ach.id}')
         if status:
@@ -159,6 +162,11 @@ def save_session(session_id):
 @dashboard_bp.route('/session/autosave/<int:session_id>', methods=['POST'])
 def autosave(session_id):
     test_session = TestSession.query.get_or_404(session_id) 
+    
+    # SEGURANÇA: Validar Posse para o Autosave
+    if test_session.user_id != session.get('user_id'):
+        return jsonify({"status": "error", "message": "Unauthorized"}), 403
+        
     data = request.json
     
     if 'emulator' in data: test_session.emulator = data['emulator']
@@ -192,8 +200,24 @@ def autosave(session_id):
 @dashboard_bp.route('/abandon/<int:session_id>')
 def abandon_session(session_id):
     test_session = TestSession.query.get_or_404(session_id)
+    
+    # SEGURANÇA: Validar Posse
+    if test_session.user_id != session.get('user_id'):
+        flash("Unauthorized access. You can only abandon your own tests.", "danger")
+        return redirect(url_for('dashboard.index'))
+        
     test_session.status = 'Abandoned'
-    test_session.game.status = 'Open'
+    
+    # LÓGICA DE COLLAB: Só volta a 'Open' se não houver mais ninguém testando
+    other_active = TestSession.query.filter(
+        TestSession.game_id == test_session.game_id,
+        TestSession.status == 'Active',
+        TestSession.id != test_session.id
+    ).first()
+
+    if not other_active:
+        test_session.game.status = 'Open'
+        
     log = GameLog(game_id=test_session.game_id, username=session.get('username'), action="Abandoned the test")
     db.session.add(log)
     db.session.commit()
@@ -204,9 +228,25 @@ def abandon_session(session_id):
 @dashboard_bp.route('/conclude/<int:session_id>')
 def conclude_session(session_id):
     test_session = TestSession.query.get_or_404(session_id)
+    
+    # SEGURANÇA: Validar Posse
+    if test_session.user_id != session.get('user_id'):
+        flash("Unauthorized access. You can only conclude your own tests.", "danger")
+        return redirect(url_for('dashboard.index'))
+        
     test_session.status = 'Concluded'
-    test_session.game.status = 'Completed'
     test_session.concluded_at = datetime.utcnow() 
+    
+    # LÓGICA DE COLLAB: Só passa a 'Completed' se todos os outros também já terminaram
+    other_active = TestSession.query.filter(
+        TestSession.game_id == test_session.game_id,
+        TestSession.status == 'Active',
+        TestSession.id != test_session.id
+    ).first()
+
+    if not other_active:
+        test_session.game.status = 'Completed'
+        
     log = GameLog(game_id=test_session.game_id, username=session.get('username'), action="Concluded the test and submitted report")
     db.session.add(log)
     db.session.commit()
