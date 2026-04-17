@@ -152,7 +152,15 @@ def save_session(session_id):
                 result = TestResult(session_id=test_session.id, achievement_id=ach.id)
                 db.session.add(result)
             
-            result.trigger_status = status
+        if 'status' in data: 
+            new_status = data['status']
+            
+            # Se era um erro e o testador clicou em "Retest OK"
+            if result.trigger_status in ['FALSE_TRIGGER', 'NO_TRIGGER'] and new_status == 'OK_AFTER_RETEST':
+                result.previous_status = result.trigger_status # Guarda o erro
+                
+            result.trigger_status = new_status
+
             result.notes = data.get(f'note_{ach.id}')
             result.save_state_link = data.get(f'link_{ach.id}')
             
@@ -187,7 +195,12 @@ def autosave(session_id):
             result = TestResult(session_id=test_session.id, achievement_id=ach_id)
             db.session.add(result)
         
-        if 'status' in data: result.trigger_status = data['status']
+        if 'status' in data: 
+            new_status = data['status']
+            if result.trigger_status and result.trigger_status != 'OK' and new_status == 'OK':
+                result.previous_status = result.trigger_status
+                
+            result.trigger_status = new_status
         if 'note' in data: result.notes = data['note']
         if 'link' in data: result.save_state_link = data['link']
 

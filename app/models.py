@@ -142,6 +142,7 @@ class TestResult(db.Model):
     session_id = db.Column(db.Integer, db.ForeignKey('test_sessions.id'), nullable=False)
     achievement_id = db.Column(db.Integer, db.ForeignKey('achievements.id'), nullable=False)
     trigger_status = db.Column(db.String(20), nullable=True)
+    previous_status = db.Column(db.String(20), nullable=True)
     notes = db.Column(db.Text, nullable=True)
     save_state_link = db.Column(db.String(500), nullable=True)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
