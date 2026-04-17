@@ -63,7 +63,7 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    // 5. NOVO: Monitorar o Cadeado (Lock Team)
+    // 5. Monitorar o Cadeado (Lock Team)
     const lockCollabSwitch = document.getElementById('lockCollab');
     if (lockCollabSwitch) {
         lockCollabSwitch.addEventListener('change', function() {
@@ -84,9 +84,14 @@ document.addEventListener("DOMContentLoaded", function() {
             
             hashStatus.innerHTML = '<div class="spinner-border spinner-border-sm text-info" role="status"></div>';
             
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            
             fetch(`/dashboard/session/validate_hash/${sessionId}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken // CRACHÁ ESTÁ AQUI
+                },
                 body: JSON.stringify({ hash: hashValue })
             })
             .then(res => {
@@ -94,21 +99,17 @@ document.addEventListener("DOMContentLoaded", function() {
                 return res.json();
             })
             .then(data => {
-                console.log("Resposta da API Hash:", data); // Olhe o F12 no navegador!
                 
                 if (data.empty) {
                     hashStatus.innerHTML = '<i class="bi bi-question-circle text-muted"></i>';
                 } else if (data.valid === true) {
-                    // Texto Verde + Ícone
-                    hashStatus.innerHTML = '<span class="text-success fw-bold me-1">OK</span><i class="bi bi-check-lg text-success"></i>';
+                    hashStatus.innerHTML = '<span class="text-success fw-bold me-1"></span><i class="bi bi-check-lg text-success"></i>';
                 } else {
-                    // Texto Vermelho + Ícone
-                    hashStatus.innerHTML = '<span class="text-danger fw-bold me-1">X</span><i class="bi bi-x-lg text-danger"></i>';
+                    hashStatus.innerHTML = '<span class="text-danger fw-bold me-1"></span><i class="bi bi-x-lg text-danger"></i>';
                 }
             })
             .catch(err => {
                 console.error("Erro no Javascript:", err);
-                // Texto Amarelo
                 hashStatus.innerHTML = '<span class="text-warning fw-bold small">ERR</span>';
             });
         }
@@ -127,33 +128,27 @@ document.addEventListener("DOMContentLoaded", function() {
     searchInputs.forEach(input => {
         input.addEventListener('input', function() {
             const term = this.value.toLowerCase();
-            // Procura qual tabela este input específico deve filtrar
             const targetTable = document.querySelector(this.getAttribute('data-target'));
             if (!targetTable) return;
 
             const rows = targetTable.querySelectorAll('tbody tr');
             rows.forEach(row => {
-                // Se a linha for aquele aviso de "Não há dados", ignora
                 if (row.querySelector('td') && row.querySelector('td').colSpan > 1) return; 
-                
-                // Esconde a linha se não contiver o texto digitado
                 const text = row.textContent.toLowerCase();
                 row.style.display = text.includes(term) ? '' : 'none';
             });
         });
     });
 
-    // 8. Auto-expandir as caixas de texto (Issue Description)
+    // 8. Auto-expandir as caixas de texto
     const textareas = document.querySelectorAll('textarea');
     textareas.forEach(textarea => {
-        // Função que faz a mágica de calcular a altura
         const autoResize = function() {
-            this.style.height = 'auto'; // Primeiro reseta a altura
-            this.style.height = this.scrollHeight + 'px'; // Depois estica para o tamanho exato do texto
+            this.style.height = 'auto'; 
+            this.style.height = this.scrollHeight + 'px'; 
         };
 
         textarea.addEventListener('input', autoResize);
-        
         setTimeout(() => autoResize.call(textarea), 0);
     });
 
