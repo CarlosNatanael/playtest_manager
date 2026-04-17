@@ -154,11 +154,12 @@ def save_session(session_id):
             
         if 'status' in data: 
             new_status = data['status']
-            
-            # Se era um erro e o testador clicou em "Retest OK"
+            # Guarda o erro original quando o tester marca Retest OK
             if result.trigger_status in ['FALSE_TRIGGER', 'NO_TRIGGER'] and new_status == 'OK_AFTER_RETEST':
-                result.previous_status = result.trigger_status # Guarda o erro
-                
+                result.previous_status = result.trigger_status
+            # Limpa o histórico se trocar de volta para erro (tester errou ao clicar)
+            elif new_status in ['FALSE_TRIGGER', 'NO_TRIGGER', 'OK']:
+                result.previous_status = None
             result.trigger_status = new_status
 
             result.notes = data.get(f'note_{ach.id}')

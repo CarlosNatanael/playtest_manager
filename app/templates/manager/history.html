@@ -43,9 +43,13 @@
                         </div>
                     </td>
                     <td>
-                        {% set test_session = sessions_map.get(game.id) %}
+                        {% set game_sessions = sessions_map.get(game.id, []) %}
                         <span class="badge bg-success mb-1">Completed</span>
-                        <div class="small text-muted">by <strong class="text-ra-gold">{{ test_session.tester.ra_username if test_session else 'Unknown' }}</strong></div>
+                        {% for ts in game_sessions %}
+                            <div class="small text-muted">by <strong class="text-ra-gold">{{ ts.tester.ra_username }}</strong></div>
+                        {% else %}
+                            <div class="small text-muted">by <strong class="text-ra-gold">Unknown</strong></div>
+                        {% endfor %}
                     </td>
                     <td>
                         <div class="small text-white">
@@ -57,9 +61,13 @@
                         </div>
                     </td>
                     <td class="text-end px-4">
-                        {% if test_session %}
-                            <a href="{{ url_for('manager.review_session', session_id=test_session.id) }}" class="btn btn-sm btn-outline-info">View Report</a>
-                        {% endif %}
+                        {% set game_sessions = sessions_map.get(game.id, []) %}
+                        {% for ts in game_sessions %}
+                            <a href="{{ url_for('manager.review_session', session_id=ts.id) }}" 
+                               class="btn btn-sm btn-outline-info d-block mb-1">
+                               View Report <span class="fw-bold">{{ ts.tester.ra_username }}</span>
+                            </a>
+                        {% endfor %}
                     </td>
                 </tr>
                 {% else %}

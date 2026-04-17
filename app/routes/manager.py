@@ -97,9 +97,14 @@ def engineer_dashboard():
 @manager_bp.route('/history')
 def history():
     games = Game.query.filter_by(status='Completed').all()
-
+    # Busca TODAS as sessões concluídas, agrupadas por game_id
     concluded_sessions = TestSession.query.filter_by(status='Concluded').all()
-    sessions_map = {s.game_id: s for s in concluded_sessions}
+    # Agrupa como lista, não sobrescreve
+    sessions_map = {}
+    for s in concluded_sessions:
+        if s.game_id not in sessions_map:
+            sessions_map[s.game_id] = []
+        sessions_map[s.game_id].append(s)
 
     return render_template('manager/history.html', 
                            games=games, 
