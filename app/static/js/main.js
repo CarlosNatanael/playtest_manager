@@ -2,9 +2,14 @@ document.addEventListener("DOMContentLoaded", function() {
     const sessionId = window.location.pathname.split('/').pop();
 
     function sendData(payload) {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        
         fetch(`/dashboard/session/autosave/${sessionId}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
             body: JSON.stringify(payload)
         }).then(res => console.log("Auto-saved:", payload));
     }

@@ -17,6 +17,7 @@
             </div>
             <div class="card-body">
                 <form action="{{ url_for('manager.manage_team') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <div class="mb-3">
                         <label class="form-label text-white small">RetroAchievements Username</label>
                         <input type="text" class="form-control bg-black text-white border-secondary" name="username" required autocomplete="off" placeholder="e.g. Saxxy25">
@@ -81,6 +82,7 @@
                                     <span class="badge bg-dark border border-secondary text-muted">You</span>
                                 {% else %}
                                     <form action="{{ url_for('manager.delete_user', username=uname) }}" method="POST" onsubmit="return confirm('Revoke access for {{ uname }}?')">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Revoke Access</button>
                                     </form>
                                 {% endif %}

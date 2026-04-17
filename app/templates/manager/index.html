@@ -110,6 +110,7 @@
                             {% endif %}
                             
                             <form action="{{ url_for('manager.delete_game', game_id=game.id) }}" method="POST" class="w-100" onsubmit="return confirm('WARNING: Permanent deletion of all test data. Proceed?')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                 <button class="btn btn-sm btn-link text-danger p-0 mt-1" style="font-size: 0.75rem; text-decoration: none;">Delete Set</button>
                             </form>
                         </div>

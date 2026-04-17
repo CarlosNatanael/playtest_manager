@@ -3,6 +3,7 @@
 {% block title %}Session: {{ test_session.game.title }}{% endblock %}
 
 {% block content %}
+<meta name="csrf-token" content="{{ csrf_token() }}">
 {% if test_session.game.is_collab and collab_partners %}
 <div class="row mb-4">
     <div class="col-12">
