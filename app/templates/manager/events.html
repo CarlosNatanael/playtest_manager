@@ -19,7 +19,7 @@
                 <h6 class="m-0 fw-bold text-success"><i class="bi bi-plus-circle me-2"></i>Create New Event</h6>
             </div>
             <div class="card-body">
-                <form action="{{ url_for('manager.manage_events') }}" method="POST">
+                <form action="{{ url_for('manager.manage_events') }}" method="POST" enctype="multipart/form-data">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <div class="mb-3">
                         <label class="text-white small form-label">Event Title</label>
@@ -29,12 +29,49 @@
                         <label class="text-white small form-label">Description</label>
                         <textarea class="form-control bg-black text-white border-secondary" name="description" rows="2" placeholder="Briefly describe the event purpose..."></textarea>
                     </div>
+                    
                     <div class="mb-4">
-                        <label class="text-white small form-label">Badge Image URL</label>
-                        <input type="url" class="form-control bg-black text-white border-secondary" name="badge_url" placeholder="https://media.retroachievements.org/...">
+                        <label class="text-white small form-label">Badge Image (URL or Upload)</label>
+                        <div class="input-group input-group-sm">
+                            <input type="url" class="form-control bg-black text-white border-secondary" name="badge_url" placeholder="https://...">
+                            <span class="input-group-text bg-dark text-white border-secondary">OR</span>
+                            <input type="file" class="form-control bg-black text-white border-secondary" name="badge_file" accept="image/*">
+                        </div>
+                        <small class="text-muted" style="font-size: 0.7rem;">Uploads are auto-compressed to <64kb (WebP).</small>
                     </div>
+
                     <button type="submit" class="btn btn-success w-100 fw-bold">Create Event</button>
                 </form>
+            </div>
+        </div>
+        <div class="card bg-dark border-warning shadow-sm">
+            <div class="card-header bg-dark border-warning">
+                <h6 class="m-0 fw-bold text-warning"><i class="bi bi-patch-check-fill me-2"></i>Pending Approvals</h6>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for approval in pending_approvals %}
+                    <li class="list-group-item bg-dark text-white border-secondary p-3">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <span class="text-ra-blue fw-bold d-block">{{ approval.tester_progress.ra_username }}</span>
+                                <small class="text-muted">{{ approval.challenge.title }}</small>
+                            </div>
+                            <form action="{{ url_for('manager.approve_manual_challenge', progress_id=approval.id) }}" method="POST">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <button type="submit" class="btn btn-sm btn-success" title="Approve Points">
+                                    <i class="bi bi-check-lg"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </li>
+                    {% else %}
+                    <li class="list-group-item bg-dark text-muted text-center py-4 small">
+                        <i class="bi bi-check2-all d-block fs-4 mb-2"></i>
+                        No pending approvals.
+                    </li>
+                    {% endfor %}
+                </ul>
             </div>
         </div>
     </div>
@@ -92,6 +129,14 @@
                                             onclick="editChallenge('{{ challenge.id }}', '{{ challenge.title }}', '{{ challenge.description }}', '{{ challenge.challenge_type }}', '{{ challenge.target_value }}', '{{ challenge.points }}', '{{ challenge.badge_url or '' }}')">
                                         <i class="bi bi-pencil-square"></i>
                                     </button>
+
+                                    <form action="{{ url_for('manager.delete_challenge', challenge_id=challenge.id) }}" method="POST" class="ms-2 mb-0" 
+                                          onsubmit="return confirm('Are you sure you want to delete the challenge {{ challenge.title }}?')">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="btn btn-sm btn-link text-danger p-0" title="Apagar Desafio">
+                                            <i class="bi bi-trash3-fill"></i>
+                                        </button>
+                                    </form>
                                 </div>
                                 
                                 <div class="small text-muted mt-1">
@@ -115,7 +160,8 @@
 
                 <div class="bg-dark p-3 rounded border border-secondary mt-3">
                     <h6 class="text-white small mb-3"><i class="bi bi-plus text-success"></i> Add Challenge</h6>
-                    <form action="{{ url_for('manager.add_challenge', event_id=event.id) }}" method="POST" class="row g-2">
+                    
+                    <form action="{{ url_for('manager.add_challenge', event_id=event.id) }}" method="POST" enctype="multipart/form-data" class="row g-2">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         
                         <div class="col-md-4">
@@ -148,7 +194,12 @@
                         </div>
 
                         <div class="col-12 mt-2">
-                            <input type="url" class="form-control form-control-sm bg-black text-white border-secondary" name="badge_url" placeholder="Specific Badge URL (Optional)">
+                            <div class="input-group input-group-sm">
+                                <input type="url" class="form-control bg-black text-white border-secondary" name="badge_url" placeholder="Specific Badge URL (Optional)">
+                                <span class="input-group-text bg-dark text-white border-secondary">OR</span>
+                                <input type="file" class="form-control bg-black text-white border-secondary" name="badge_file" accept="image/*">
+                            </div>
+                            <small class="text-muted" style="font-size: 0.7rem;">Uploads are auto-compressed to <64kb (WebP).</small>
                         </div>
                     </form>
                 </div>
@@ -175,6 +226,10 @@ function editChallenge(id, title, desc, type, target, points, badgeUrl) {
         form.querySelector('input[name="target_value"]').value = target;
         form.querySelector('input[name="points"]').value = points;
         form.querySelector('input[name="badge_url"]').value = badgeUrl;
+    
+        const fileInput = form.querySelector('input[name="badge_file"]');
+        if(fileInput) fileInput.value = "";
+
         const btn = form.querySelector('button[type="submit"]');
         btn.classList.replace('btn-success', 'btn-warning');
         btn.innerHTML = '<i class="bi bi-pencil-square"></i> Update';

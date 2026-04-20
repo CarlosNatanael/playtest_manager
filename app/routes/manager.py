@@ -2,11 +2,14 @@ from app.models import Game, Achievement, TestSession, TestResult, User, GameLog
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from app.services.ra_api import get_developer_level, fetch_game_and_achievements
 from werkzeug.security import generate_password_hash
-from flask import current_app
+from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
+from flask import current_app
+from PIL import Image
 from app import db
 import secrets
 import json
+import uuid
 import os
 
 manager_bp = Blueprint('manager', __name__)
@@ -354,7 +357,20 @@ def manage_events():
         return redirect(url_for('manager.manage_events'))
         
     events = Event.query.order_by(Event.start_date.desc()).all()
-    return render_template('manager/events.html', events=events)
+    active_event = Event.query.filter_by(is_active=True).first()
+    pending_approvals = []
+    
+    if active_event:
+        # Busca progressos de desafios MANUAIS que ainda NÃO estão completos
+        pending_approvals = UserEventProgress.query.join(EventChallenge).filter(
+            EventChallenge.event_id == active_event.id,
+            EventChallenge.challenge_type == 'manual',
+            UserEventProgress.is_completed == False
+        ).all()
+
+    return render_template('manager/events.html', 
+                           events=events, 
+                           pending_approvals=pending_approvals)
 
 @manager_bp.route('/events/<int:event_id>/toggle', methods=['POST'])
 def toggle_event(event_id):
@@ -370,11 +386,32 @@ def toggle_event(event_id):
     flash(f"Event '{event.title}' has been {status}.", "info")
     return redirect(url_for('manager.manage_events'))
 
+@manager_bp.route('/events/manual_approve/<int:progress_id>', methods=['POST'])
+def approve_manual_challenge(progress_id):
+    
+    progress = UserEventProgress.query.get_or_404(progress_id)
+    progress.current_value = progress.challenge.target_value
+    progress.is_completed = True
+    progress.completed_at = datetime.utcnow()
+    
+    db.session.commit()
+    
+    flash(f"Challenge approved for {progress.tester_progress.ra_username}!", "success")
+    return redirect(url_for('manager.manage_events'))
+
 @manager_bp.route('/events/<int:event_id>/challenge', methods=['POST'])
 def add_challenge(event_id):
     event = Event.query.get_or_404(event_id)
+    
+    badge_file = request.files.get('badge_file')
     badge_url = request.form.get('badge_url')
     
+    final_badge_path = None
+    if badge_file and badge_file.filename != '':
+        final_badge_path = save_and_compress_image(badge_file)
+    elif badge_url:
+        final_badge_path = badge_url
+
     new_challenge = EventChallenge(
         event_id=event.id,
         title=request.form.get('title'),
@@ -382,7 +419,7 @@ def add_challenge(event_id):
         challenge_type=request.form.get('challenge_type'),
         target_value=int(request.form.get('target_value', 1)),
         points=int(request.form.get('points', 10)),
-        badge_url=badge_url if badge_url else None
+        badge_url=final_badge_path
     )
     db.session.add(new_challenge)
     db.session.commit()
@@ -404,6 +441,17 @@ def edit_challenge(challenge_id):
     
     db.session.commit()
     flash('Challenge updated successfully!', 'success')
+    return redirect(url_for('manager.manage_events'))
+
+@manager_bp.route('/events/challenge/<int:challenge_id>/delete', methods=['POST'])
+def delete_challenge(challenge_id):
+    challenge = EventChallenge.query.get_or_404(challenge_id)
+    title = challenge.title
+    
+    db.session.delete(challenge)
+    db.session.commit()
+    
+    flash(f"Challenge '{title}' successfully removed!", "success")
     return redirect(url_for('manager.manage_events'))
 
 @manager_bp.route('/events/<int:event_id>/delete', methods=['POST'])
@@ -438,11 +486,13 @@ def sync_event_progress(user_id):
 
     for challenge in active_event.challenges:
         progress = UserEventProgress.query.filter_by(user_id=user_id, challenge_id=challenge.id).first()
+        
         if not progress:
-            progress = UserEventProgress(user_id=user_id, challenge_id=challenge.id)
+            # CORREÇÃO 1: Forçar explicitamente o current_value para 0 na criação
+            progress = UserEventProgress(user_id=user_id, challenge_id=challenge.id, current_value=0)
             db.session.add(progress)
 
-        # Update based on type
+        # Atualiza baseado no tipo
         if challenge.challenge_type == 'auto_reports':
             progress.current_value = reports_count
         elif challenge.challenge_type == 'auto_issues':
@@ -450,10 +500,39 @@ def sync_event_progress(user_id):
         elif challenge.challenge_type == 'auto_validated':
             progress.current_value = validated_count
         
-        # Check if completed
-        if progress.current_value >= challenge.target_value:
+        # CORREÇÃO 2: Rede de segurança. Se por acaso for None, transforma em 0
+        current_val = progress.current_value if progress.current_value is not None else 0
+        target_val = challenge.target_value if challenge.target_value is not None else 1
+        
+        # Verifica se completou usando os valores seguros
+        if current_val >= target_val:
             if not progress.is_completed:
                 progress.is_completed = True
                 progress.completed_at = datetime.utcnow()
     
     db.session.commit()
+
+def save_and_compress_image(upload_file):
+    if not upload_file or upload_file.filename == '':
+        return None
+
+    upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'events')
+    os.makedirs(upload_folder, exist_ok=True)
+    
+    filename = f"{uuid.uuid4().hex}.webp"
+    filepath = os.path.join(upload_folder, filename)
+    
+    try:
+        img = Image.open(upload_file)
+        
+        if img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
+            
+        img.thumbnail((256, 256))
+        
+        img.save(filepath, 'WEBP', quality=80)
+        
+        return f"/static/uploads/events/{filename}"
+    except Exception as e:
+        print(f"Error processing image: {e}")
+        return None
