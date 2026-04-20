@@ -3,8 +3,9 @@ from app.models import Game, Achievement, TestSession, TestResult, User, GameLog
 from app.services.ra_api import get_developer_level, fetch_game_and_achievements
 from werkzeug.security import generate_password_hash
 from flask import current_app
-from datetime import datetime
+from datetime import datetime, timedelta
 from app import db
+import secrets
 import json
 import os
 
@@ -23,54 +24,71 @@ def manage_team():
         users_db = {}
 
     if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
+        form_username = request.form.get('username') 
         role = request.form.get('role')
+        creation_method = request.form.get('creation_method') 
 
-        if not username or not password or not role:
-            flash('All fields are required!', 'warning')
-            return redirect(url_for('manager.manage_team'))
-
-        if username in users_db:
-            flash(f'User {username} already exists.', 'danger')
-            return redirect(url_for('manager.manage_team'))
-
-        hashed_password = generate_password_hash(password)
-
-        users_db[username] = {
-            'password': hashed_password,
-            'role': role
-        }
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump(users_db, f, indent=4)
-
-        flash(f'User {username} successfully added to the team!', 'success')
+        if User.query.filter_by(ra_username=form_username).first():
+            flash(f"User '{form_username}' already exists.", "danger")
+        else:
+            new_user = User(ra_username=form_username, role=role)
+            
+            if creation_method == 'link':
+                token = secrets.token_urlsafe(32)
+                new_user.password_hash = 'PENDING_INVITE'
+                new_user.invite_token = token
+                new_user.token_expiry = datetime.utcnow() + timedelta(hours=24)
+                
+                db.session.add(new_user)
+                db.session.commit()
+                
+                invite_url = url_for('auth.setup_password', token=token, _external=True)
+                
+                flash(f"User created! Copy the link below and send it to them (Valid for 24h):<br><input type='text' class='form-control bg-dark text-info mt-2' value='{invite_url}' readonly onclick='this.select()'>", "success")
+            
+            else:
+                # MANUAL CREATION
+                password = request.form.get('password')
+                new_user.set_password(password)
+                db.session.add(new_user)
+                db.session.commit()
+                flash(f"User '{form_username}' added successfully with manual password.", "success")
+                
         return redirect(url_for('manager.manage_team'))
 
-    return render_template('manager/team.html', users=users_db)
+    users = User.query.all()
+    return render_template('manager/team.html', users=users, users_db=users_db)
 
 @manager_bp.route('/team/delete/<username>', methods=['POST'])
 def delete_user(username):
-    file_path = get_allowed_users_path()
-    try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            users_db = json.load(f)
+    user = User.query.filter_by(ra_username=username).first()
+    
+    if user:
+        if user.ra_username == session.get('username'):
+            flash("You cannot revoke your own access!", "warning")
+        else:
+            user.is_active = False 
+            user.password_hash = None
+            user.invite_token = None
             
-        if username in users_db:
-            if username == session.get('username'):
-                flash('You cannot delete your own Manager account!', 'danger')
-            elif username.lower() == 'bot':
-                flash('The System Bot is protected and cannot be removed.', 'warning')
-            else:
-                del users_db[username]
-                with open(file_path, 'w', encoding='utf-8') as f:
-                    json.dump(users_db, f, indent=4)
-                flash(f'Access for {username} has been revoked.', 'info')
-                
-    except Exception as e:
-        flash(f'Error removing user: {e}', 'danger')
+            db.session.commit()
+            flash(f"Access for {username} revoked! Test history has been preserved in the system.", "success")
+    else:
+        flash(f"User {username} not found.", "danger")
+        
+    return redirect(url_for('manager.manage_team'))
 
+@manager_bp.route('/team/restore/<username>', methods=['POST'])
+def restore_user(username):
+    user = User.query.filter_by(ra_username=username).first()
+    
+    if user:
+        user.is_active = True
+        db.session.commit()
+        flash(f"Access for {username} restored! You can generate a new magic link or password for them using the form.", "success")
+    else:
+        flash(f"User {username} not found.", "danger")
+        
     return redirect(url_for('manager.manage_team'))
 
 @manager_bp.route('/')
@@ -97,9 +115,9 @@ def engineer_dashboard():
 @manager_bp.route('/history')
 def history():
     games = Game.query.filter_by(status='Completed').all()
-    # Busca TODAS as sessões concluídas, agrupadas por game_id
+    # Fetches ALL concluded sessions, grouped by game_id
     concluded_sessions = TestSession.query.filter_by(status='Concluded').all()
-    # Agrupa como lista, não sobrescreve
+    # Groups as a list, does not overwrite
     sessions_map = {}
     for s in concluded_sessions:
         if s.game_id not in sessions_map:

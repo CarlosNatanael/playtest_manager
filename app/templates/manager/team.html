@@ -22,11 +22,6 @@
                         <label class="form-label text-white small">RetroAchievements Username</label>
                         <input type="text" class="form-control bg-black text-white border-secondary" name="username" required autocomplete="off" placeholder="e.g. Saxxy25">
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label text-white small">Temporary Password</label>
-                        <input type="password" class="form-control bg-black text-white border-secondary" name="password" required>
-                        <small class="text-muted" style="font-size: 0.7rem;">Password will be securely hashed upon creation.</small>
-                    </div>
                     <div class="mb-4">
                         <label class="form-label text-white small">Role</label>
                         <select class="form-select bg-black text-white border-secondary" name="role" required>
@@ -34,7 +29,18 @@
                             <option value="Playtest Manager">Playtest Manager</option>
                         </select>
                     </div>
-                    <button type="submit" class="btn btn-success w-100 fw-bold">Create Account</button>
+                    <div class="mb-3">
+                        <label class="form-label text-ra-gold small">Setup Method</label>
+                        <select name="creation_method" id="creationMethod" class="form-select bg-black text-white border-secondary mb-3" onchange="togglePasswordInput()">
+                            <option value="link">Generate 24h Invite Link</option>
+                            <option value="manual">Set Password Manually</option>
+                        </select>
+                    </div>
+                    <div class="mb-3 d-none" id="manualPasswordDiv">
+                        <label class="form-label text-ra-gold small">Temporary Password</label>
+                        <input type="text" name="password" id="manualPassword" class="form-control bg-black text-white border-secondary">
+                    </div>
+                    <button type="submit" class="btn btn-outline-success w-100 fw-bold"><i class="bi bi-person-plus-fill"></i> Create User</button>
                 </form>
             </div>
         </div>
@@ -55,33 +61,42 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for uname, data in users.items() %}
-                        <tr>
+                        {% for user in users %}
+                        <tr class="{{ 'opacity-50' if not user.is_active else '' }}">
                             <td class="px-4 text-white fw-bold">
-                                {% if uname.lower() == 'bot' %}
-                                    <i class="bi bi-robot text-info me-2"></i><span class="text-info">{{ uname }}</span>
+                                {% if not user.is_active %}
+                                    <i class="bi bi-person-slash text-danger me-2"></i><span class="text-secondary text-decoration-line-through">{{ user.ra_username }}</span>
+                                {% elif user.ra_username.lower() == 'bot' %}
+                                    <i class="bi bi-robot text-info me-2"></i><span class="text-info">{{ user.ra_username }}</span>
                                 {% else %}
-                                    <i class="bi bi-person-circle text-secondary me-2"></i>{{ uname }}
+                                    <i class="bi bi-person-circle text-secondary me-2"></i>{{ user.ra_username }}
                                 {% endif %}
                             </td>
                             <td>
-                                {% if uname.lower() == 'bot' %}
+                                {% if not user.is_active %}
+                                    <span class="badge bg-secondary border border-secondary text-light">Access Revoked</span>
+                                {% elif user.ra_username.lower() == 'bot' %}
                                     <span class="badge bg-primary">System Automator</span>
-                                {% elif data.role == 'Playtest Manager' %}
+                                {% elif user.role == 'Playtest Manager' %}
                                     <span class="badge bg-danger">Manager</span>
-                                {% elif data.role == 'Engineer' %}
+                                {% elif user.role == 'Engineer' %}
                                     <span class="badge bg-primary">Engineer</span>
                                 {% else %}
                                     <span class="badge bg-info text-dark">Playtester</span>
                                 {% endif %}
                             </td>
                             <td class="text-end px-4">
-                                {% if uname.lower() == 'bot' %}
+                                {% if not user.is_active %}
+                                    <form action="{{ url_for('manager.restore_user', username=user.ra_username) }}" method="POST" class="d-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="btn btn-sm btn-outline-success"><i class="bi bi-arrow-counterclockwise"></i> Restaurar</button>
+                                    </form>
+                                {% elif user.ra_username.lower() == 'bot' %}
                                     <span class="badge bg-dark border border-info text-info">Protected</span>
-                                {% elif uname == session.get('username') %}
+                                {% elif user.ra_username == session.get('username') %}
                                     <span class="badge bg-dark border border-secondary text-muted">You</span>
                                 {% else %}
-                                    <form action="{{ url_for('manager.delete_user', username=uname) }}" method="POST" onsubmit="return confirm('Revoke access for {{ uname }}?')">
+                                    <form action="{{ url_for('manager.delete_user', username=user.ra_username) }}" method="POST" onsubmit="return confirm('Revoke access for {{ user.ra_username }}?')">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Revoke Access</button>
                                     </form>
@@ -100,4 +115,20 @@
         </div>
     </div>
 </div>
+
+<script>
+function togglePasswordInput() {
+    const method = document.getElementById('creationMethod').value;
+    const pwdDiv = document.getElementById('manualPasswordDiv');
+    const pwdInput = document.getElementById('manualPassword');
+    
+    if (method === 'manual') {
+        pwdDiv.classList.remove('d-none');
+        pwdInput.required = true;
+    } else {
+        pwdDiv.classList.add('d-none');
+        pwdInput.required = false;
+    }
+}
+</script>
 {% endblock %}

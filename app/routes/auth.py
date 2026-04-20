@@ -1,79 +1,72 @@
 from flask import Blueprint, request, render_template, redirect, url_for, flash, session, current_app
-from werkzeug.security import check_password_hash
 from app.models import User, db
-import json
-import os
+from datetime import datetime
 
 auth_bp = Blueprint('auth', __name__)
 
-def get_allowed_users():
-    file_path = os.path.join(current_app.instance_path, 'allowed_users.json')
-    try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return {} 
-
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
-
-    if 'username' in session and 'role' in session and 'user_id' in session:
-        return redirect_by_role(session['role'])
-    
-    elif 'username' in session:
-        session.clear()
+    if 'user_id' in session:
+        return redirect_by_role(session.get('role'))
 
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
 
         if not username or not password:
-            flash('Please enter your Username and Password.', 'warning')
+            flash('Please enter your username and password.', 'warning')
             return redirect(url_for('auth.login'))
+        user = User.query.filter_by(ra_username=username).first()
 
-        users_db = get_allowed_users()
-        if username not in users_db:
-            flash('Access Denied: Your user is not registered in the team.', 'danger')
-            return redirect(url_for('auth.login'))
-        
-        user_data = users_db[username]
-        stored_password = user_data['password']
-        
-        is_valid_password = False
-        if stored_password.startswith('scrypt:') or stored_password.startswith('pbkdf2:'):
-            is_valid_password = check_password_hash(stored_password, password)
-        else:
-            is_valid_password = (stored_password == password)
-
-        if not is_valid_password:
-            flash('Incorrect password.', 'danger')
-            return redirect(url_for('auth.login'))
+        if user and user.check_password(password):
+            if not user.is_active:
+                flash("This account has been deactivated by the Administrator.", "danger")
+                return redirect(url_for('auth.login'))
             
-        user_db_record = User.query.filter_by(ra_username=username).first()
-        
-        if not user_db_record:
-            user_db_record = User(ra_username=username, role=user_data['role'])
-            db.session.add(user_db_record)
-            db.session.commit()
-
-        session['username'] = username
-        session['role'] = user_data['role']
-        session['user_id'] = user_db_record.id
-
-        return redirect_by_role(session['role'])
-
+            session['user_id'] = user.id
+            session['username'] = user.ra_username
+            session['role'] = user.role
+            
+            flash(f"Welcome back, {user.ra_username}!", "success")
+            return redirect_by_role(user.role)
+        else:
+            flash("Invalid username or password.", "danger")
+            
     return render_template('auth/login.html')
+
+@auth_bp.route('/invite/<token>', methods=['GET', 'POST'])
+def setup_password(token):
+    user = User.query.filter_by(invite_token=token).first()
+    
+    if not user or not user.token_expiry or user.token_expiry < datetime.utcnow():
+        flash('This invite link is invalid or has expired.', 'danger')
+        return redirect(url_for('auth.login'))
+        
+    if request.method == 'POST':
+        new_password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        
+        if new_password != confirm_password:
+            flash('Passwords do not match.', 'warning')
+            return redirect(url_for('auth.setup_password', token=token))
+
+        user.set_password(new_password)
+        user.invite_token = None
+        user.token_expiry = None
+        db.session.commit()
+        
+        flash('Password set successfully! You can now log in.', 'success')
+        return redirect(url_for('auth.login'))
+        
+    return render_template('auth/setup_password.html', token=token, user=user)
 
 @auth_bp.route('/logout')
 def logout():
     session.clear()
-    flash('You have successfully logged out.', 'info')
+    flash('Logged out successfully.', 'info')
     return redirect(url_for('auth.login'))
 
 def redirect_by_role(role):
-    if role == 'Engineer':
-        return redirect(url_for('manager.engineer_dashboard'))
-    elif role == 'Playtest Manager':
+    if role == 'Playtest Manager':
         return redirect(url_for('manager.index'))
-    else:
-        return redirect(url_for('dashboard.index'))
+    return redirect(url_for('dashboard.index'))

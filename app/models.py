@@ -10,7 +10,22 @@ class User(db.Model):
     role = db.Column(db.String(20), default='playtester')
     is_active = db.Column(db.Boolean, default=True)
     
+    password_hash = db.Column(db.String(255), nullable=True)
+    invite_token = db.Column(db.String(100), unique=True, nullable=True)
+    token_expiry = db.Column(db.DateTime, nullable=True)
+    
     sessions = db.relationship('TestSession', backref='tester', lazy=True)
+
+    def set_password(self, password):
+        from werkzeug.security import generate_password_hash
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        from werkzeug.security import check_password_hash
+        if not self.password_hash or self.password_hash == 'PENDING_INVITE':
+            return False
+            
+        return check_password_hash(self.password_hash, password)
 
 class Game(db.Model):
     __tablename__ = 'games'
