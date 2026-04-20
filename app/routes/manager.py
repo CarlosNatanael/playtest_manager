@@ -321,3 +321,19 @@ def reset_password(username):
         flash(f"User {username} not found.", "danger")
         
     return redirect(url_for('manager.manage_team'))
+
+@manager_bp.route('/team/edit_image/<username>', methods=['POST'])
+def edit_image_name(username):
+    user = User.query.filter_by(ra_username=username).first()
+    
+    if user:
+        old_name = request.form.get('old_name')
+        user.image_username = old_name if old_name else None
+        db.session.commit()
+        
+        if username == session.get('username'):
+            session['image_username'] = user.image_username
+            
+        flash(f"Photo name updated to {username}!", "success")
+    
+    return redirect(url_for('manager.manage_team'))

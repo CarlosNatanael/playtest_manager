@@ -32,12 +32,13 @@
                     <ul class="navbar-nav ms-auto align-items-center">
                         {% if session.get('username') %}
                             <li class="nav-item d-flex align-items-center me-4">
-                                <img src="https://media.retroachievements.org/UserPic/{{ session.get('username') }}.png" 
-                                     alt="{{ session.get('username') }}" 
+                                {% set img_name = session.get('image_username') if session.get('image_username') else session.get('username') %}                    
+                                
+                                <img src="https://media.retroachievements.org/UserPic/{{ img_name }}.png" 
                                      class="rounded-circle border border-secondary me-2 shadow-sm" 
                                      style="width: 32px; height: 32px; object-fit: cover;"
                                      onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ session.get('username') }}&background=212529&color=f8b400';">
-
+                                
                                 <span class="text-white fw-bold">{{ session.get('username') }}</span>
                             </li>
                             

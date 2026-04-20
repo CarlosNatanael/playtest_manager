@@ -26,6 +26,7 @@ def login():
             session['user_id'] = user.id
             session['username'] = user.ra_username
             session['role'] = user.role
+            session['image_username'] = user.image_username
             
             flash(f"Welcome back, {user.ra_username}!", "success")
             return redirect_by_role(user.role)

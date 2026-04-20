@@ -6,6 +6,7 @@ class User(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     ra_username = db.Column(db.String(100), unique=True, nullable=False)
+    image_username = db.Column(db.String(100), nullable=True)
     discord_id = db.Column(db.String(100), unique=True, nullable=True)
     role = db.Column(db.String(20), default='playtester')
     is_active = db.Column(db.Boolean, default=True)

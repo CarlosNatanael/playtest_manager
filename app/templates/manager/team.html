@@ -71,7 +71,9 @@
                                     <i class="bi bi-robot text-info me-2 fs-5"></i>
                                     <span class="text-info">{{ user.ra_username }}</span>
                                 {% else %}
-                                    <img src="https://media.retroachievements.org/UserPic/{{ user.ra_username }}.png" 
+                                    {% set img_name = user.image_username if user.image_username else user.ra_username %}
+                                                        
+                                    <img src="https://media.retroachievements.org/UserPic/{{ img_name }}.png" 
                                          class="rounded-circle border border-secondary me-2" 
                                          style="width: 28px; height: 28px; object-fit: cover;"
                                          onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ user.ra_username }}&background=212529&color=fff';">
@@ -92,10 +94,17 @@
                                 {% endif %}
                             </td>
                             <td class="text-end px-4">
+                                    <form action="{{ url_for('manager.edit_image_name', username=user.ra_username) }}" method="POST" class="d-inline me-1" onsubmit="return fixImagePrompt(this, '{{ user.ra_username }}', '{{ user.image_username or '' }}')">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <input type="hidden" name="old_name" class="old-name-input">
+                                        <button type="submit" class="btn btn-sm btn-outline-warning" title="Consertar Foto do Perfil">
+                                            <i class="bi bi-image"></i>
+                                        </button>
+                                    </form>
                                 {% if not user.is_active %}
                                     <form action="{{ url_for('manager.restore_user', username=user.ra_username) }}" method="POST" class="d-inline">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                        <button type="submit" class="btn btn-sm btn-outline-success"><i class="bi bi-arrow-counterclockwise"></i> Restaurar</button>
+                                        <button type="submit" class="btn btn-sm btn-outline-success"><i class="bi bi-arrow-counterclockwise"></i> Restore</button>
                                     </form>
                                 {% elif user.ra_username.lower() == 'bot' %}
                                     <span class="badge bg-dark border border-info text-info">Protected</span>
@@ -142,6 +151,16 @@ function togglePasswordInput() {
         pwdDiv.classList.add('d-none');
         pwdInput.required = false;
     }
+}
+function fixImagePrompt(form, currentName, existingOldName) {
+    let msg = `Has the user ${currentName} changed their name on RA?\nEnter the original registration name to pull the correct photo (or leave blank to clear):`;
+    let newName = prompt(msg, existingOldName);
+    
+    if (newName !== null) {
+        form.querySelector('.old-name-input').value = newName.trim();
+        return true; // Continua o envio
+    }
+    return false; // Cancela se o Manager clicar em 'Cancelar'
 }
 </script>
 {% endblock %}
