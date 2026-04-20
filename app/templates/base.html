@@ -31,9 +31,16 @@
                 <div class="collapse navbar-collapse">
                     <ul class="navbar-nav ms-auto align-items-center">
                         {% if session.get('username') %}
-                            <li class="nav-item me-3">
-                                <span class="nav-link text-white">Hi, <strong class="text-ra-gold">{{ session.get('username') }}</strong></span>
+                            <li class="nav-item d-flex align-items-center me-4">
+                                <img src="https://media.retroachievements.org/UserPic/{{ session.get('username') }}.png" 
+                                     alt="{{ session.get('username') }}" 
+                                     class="rounded-circle border border-secondary me-2 shadow-sm" 
+                                     style="width: 32px; height: 32px; object-fit: cover;"
+                                     onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ session.get('username') }}&background=212529&color=f8b400';">
+
+                                <span class="text-white fw-bold">{{ session.get('username') }}</span>
                             </li>
+                            
                             <li class="nav-item">
                                 <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger btn-sm fw-bold">Logout</a>
                             </li>

@@ -63,13 +63,19 @@
                     <tbody>
                         {% for user in users %}
                         <tr class="{{ 'opacity-50' if not user.is_active else '' }}">
-                            <td class="px-4 text-white fw-bold">
+                            <td class="px-4 text-white fw-bold d-flex align-items-center">
                                 {% if not user.is_active %}
-                                    <i class="bi bi-person-slash text-danger me-2"></i><span class="text-secondary text-decoration-line-through">{{ user.ra_username }}</span>
+                                    <i class="bi bi-person-slash text-danger me-2 fs-5"></i>
+                                    <span class="text-secondary text-decoration-line-through">{{ user.ra_username }}</span>
                                 {% elif user.ra_username.lower() == 'bot' %}
-                                    <i class="bi bi-robot text-info me-2"></i><span class="text-info">{{ user.ra_username }}</span>
+                                    <i class="bi bi-robot text-info me-2 fs-5"></i>
+                                    <span class="text-info">{{ user.ra_username }}</span>
                                 {% else %}
-                                    <i class="bi bi-person-circle text-secondary me-2"></i>{{ user.ra_username }}
+                                    <img src="https://media.retroachievements.org/UserPic/{{ user.ra_username }}.png" 
+                                         class="rounded-circle border border-secondary me-2" 
+                                         style="width: 28px; height: 28px; object-fit: cover;"
+                                         onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ user.ra_username }}&background=212529&color=fff';">
+                                    {{ user.ra_username }}
                                 {% endif %}
                             </td>
                             <td>
