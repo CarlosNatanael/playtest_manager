@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, session
-from app.models import Game, TestSession, db, TestResult, GameLog
+from app.models import Game, TestSession, db, TestResult, GameLog, Event
 from app.services.ra_api import validate_game_hash
+from app.routes.manager import sync_event_progress
 from datetime import datetime, timedelta
 import json
 
@@ -9,8 +10,12 @@ dashboard_bp = Blueprint('dashboard', __name__)
 @dashboard_bp.route('/')
 def index():
     user_id = session.get('user_id')
+    active_event = Event.query.filter_by(is_active=True).first()
     if not user_id:
         return redirect(url_for('auth.login'))
+    
+    if active_event and 'user_id' in session:
+        sync_event_progress(session['user_id'])
 
     open_games = Game.query.filter(
         db.or_(
@@ -24,7 +29,8 @@ def index():
     return render_template('dashboard/index.html', 
                            open_games=open_games, 
                            active_sessions=active_sessions,
-                           active_game_ids=active_game_ids)
+                           active_game_ids=active_game_ids,
+                           active_event=active_event)
 
 @dashboard_bp.before_request
 def restrict_dashboard_access():

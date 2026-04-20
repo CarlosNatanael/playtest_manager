@@ -10,6 +10,7 @@ class User(db.Model):
     discord_id = db.Column(db.String(100), unique=True, nullable=True)
     role = db.Column(db.String(20), default='playtester')
     is_active = db.Column(db.Boolean, default=True)
+    event_progress = db.relationship('UserEventProgress', backref='tester_progress', lazy=True)
     
     password_hash = db.Column(db.String(255), nullable=True)
     invite_token = db.Column(db.String(100), unique=True, nullable=True)
@@ -122,6 +123,42 @@ class Achievement(db.Model):
     points = db.Column(db.Integer, default=0)
     
     results = db.relationship('TestResult', backref='achievement', lazy=True)
+
+class Event(db.Model):
+    __tablename__ = 'events'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    badge_url = db.Column(db.String(255), nullable=True)
+    is_active = db.Column(db.Boolean, default=False)
+    start_date = db.Column(db.DateTime, default=datetime.utcnow)
+    end_date = db.Column(db.DateTime, nullable=True)
+    
+    challenges = db.relationship('EventChallenge', backref='event', lazy=True, cascade="all, delete-orphan")
+
+class EventChallenge(db.Model):
+    __tablename__ = 'event_challenges'
+    id = db.Column(db.Integer, primary_key=True)
+    badge_url = db.Column(db.String(255), nullable=True)
+    event_id = db.Column(db.Integer, db.ForeignKey('events.id'), nullable=False)
+    title = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    
+    challenge_type = db.Column(db.String(50), nullable=False) 
+    target_value = db.Column(db.Integer, default=1)
+    points = db.Column(db.Integer, default=10)
+    
+    progress = db.relationship('UserEventProgress', backref='challenge', lazy=True, cascade="all, delete-orphan")
+
+class UserEventProgress(db.Model):
+    __tablename__ = 'user_event_progress'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    challenge_id = db.Column(db.Integer, db.ForeignKey('event_challenges.id'), nullable=False)
+    
+    current_value = db.Column(db.Integer, default=0)
+    is_completed = db.Column(db.Boolean, default=False)
+    completed_at = db.Column(db.DateTime, nullable=True)
 
 class TestSession(db.Model):
     __tablename__ = 'test_sessions'

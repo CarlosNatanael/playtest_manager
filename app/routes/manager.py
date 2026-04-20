@@ -1,5 +1,5 @@
+from app.models import Game, Achievement, TestSession, TestResult, User, GameLog, Event, EventChallenge, UserEventProgress
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from app.models import Game, Achievement, TestSession, TestResult, User, GameLog
 from app.services.ra_api import get_developer_level, fetch_game_and_achievements
 from werkzeug.security import generate_password_hash
 from flask import current_app
@@ -337,3 +337,123 @@ def edit_image_name(username):
         flash(f"Photo name updated to {username}!", "success")
     
     return redirect(url_for('manager.manage_team'))
+
+# ROTAS DO SISTEMA DE EVENTOS
+
+@manager_bp.route('/events', methods=['GET', 'POST'])
+def manage_events():
+    if request.method == 'POST':
+        title = request.form.get('title')
+        description = request.form.get('description')
+        badge_url = request.form.get('badge_url')
+        
+        new_event = Event(title=title, description=description, badge_url=badge_url)
+        db.session.add(new_event)
+        db.session.commit()
+        flash(f"Event '{title}' created successfully!", "success")
+        return redirect(url_for('manager.manage_events'))
+        
+    events = Event.query.order_by(Event.start_date.desc()).all()
+    return render_template('manager/events.html', events=events)
+
+@manager_bp.route('/events/<int:event_id>/toggle', methods=['POST'])
+def toggle_event(event_id):
+    event = Event.query.get_or_404(event_id)
+    
+    if not event.is_active:
+        Event.query.update({Event.is_active: False})
+        
+    event.is_active = not event.is_active
+    db.session.commit()
+    
+    status = "activated" if event.is_active else "deactivated"
+    flash(f"Event '{event.title}' has been {status}.", "info")
+    return redirect(url_for('manager.manage_events'))
+
+@manager_bp.route('/events/<int:event_id>/challenge', methods=['POST'])
+def add_challenge(event_id):
+    event = Event.query.get_or_404(event_id)
+    badge_url = request.form.get('badge_url')
+    
+    new_challenge = EventChallenge(
+        event_id=event.id,
+        title=request.form.get('title'),
+        description=request.form.get('description'),
+        challenge_type=request.form.get('challenge_type'),
+        target_value=int(request.form.get('target_value', 1)),
+        points=int(request.form.get('points', 10)),
+        badge_url=badge_url if badge_url else None
+    )
+    db.session.add(new_challenge)
+    db.session.commit()
+    flash('Challenge added successfully!', 'success')
+    return redirect(url_for('manager.manage_events'))
+
+@manager_bp.route('/events/challenge/<int:challenge_id>/edit', methods=['POST'])
+def edit_challenge(challenge_id):
+    challenge = EventChallenge.query.get_or_404(challenge_id)
+    
+    challenge.title = request.form.get('title')
+    challenge.description = request.form.get('description')
+    challenge.challenge_type = request.form.get('challenge_type')
+    challenge.target_value = int(request.form.get('target_value', 1))
+    challenge.points = int(request.form.get('points', 10))
+    
+    badge_url = request.form.get('badge_url')
+    challenge.badge_url = badge_url if badge_url else None
+    
+    db.session.commit()
+    flash('Challenge updated successfully!', 'success')
+    return redirect(url_for('manager.manage_events'))
+
+@manager_bp.route('/events/<int:event_id>/delete', methods=['POST'])
+def delete_event(event_id):
+    event = Event.query.get_or_404(event_id)
+    title = event.title
+    
+    db.session.delete(event)
+    db.session.commit()
+    
+    flash(f"Event '{title}' and all its challenges have been removed.", "success")
+    return redirect(url_for('manager.manage_events'))
+
+def sync_event_progress(user_id):
+    active_event = Event.query.filter_by(is_active=True).first()
+    if not active_event:
+        return
+
+    # Real user statistics
+    sessions = TestSession.query.filter_by(user_id=user_id).all()
+    reports_count = len([s for s in sessions if s.status == 'Concluded'])
+    
+    issues_count = TestResult.query.join(TestSession).filter(
+        TestSession.user_id == user_id,
+        TestResult.trigger_status.in_(['FALSE_TRIGGER', 'NO_TRIGGER', 'OK_AFTER_RETEST'])
+    ).count()
+    
+    validated_count = TestResult.query.join(TestSession).filter(
+        TestSession.user_id == user_id,
+        TestResult.trigger_status.in_(['OK', 'OK_AFTER_RETEST'])
+    ).count()
+
+    for challenge in active_event.challenges:
+        progress = UserEventProgress.query.filter_by(user_id=user_id, challenge_id=challenge.id).first()
+        if not progress:
+            progress = UserEventProgress(user_id=user_id, challenge_id=challenge.id)
+            db.session.add(progress)
+
+        # Update based on type
+        if challenge.challenge_type == 'auto_reports':
+            progress.current_value = reports_count
+        elif challenge.challenge_type == 'auto_issues':
+            progress.current_value = issues_count
+        elif challenge.challenge_type == 'auto_validated':
+            progress.current_value = validated_count
+        
+        # Check if completed
+        if progress.current_value >= challenge.target_value:
+            if not progress.is_completed:
+                progress.is_completed = True
+                progress.completed_at = datetime.utcnow()
+    
+    db.session.commit()

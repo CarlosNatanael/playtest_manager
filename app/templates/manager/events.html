@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% block title %}Manage Events - Playtest Coordinator{% endblock %}
+
+{% block content %}
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <div>
+        <a href="{{ url_for('manager.index') }}" class="btn btn-outline-secondary btn-sm mb-2">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+        <h2 class="text-white"><i class="bi bi-trophy-fill text-ra-gold me-2"></i>Event Management</h2>
+        <p class="text-muted small">Create seasonal events and configure challenges for playtesters.</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card bg-dark border-secondary shadow-sm mb-4">
+            <div class="card-header bg-dark border-secondary">
+                <h6 class="m-0 fw-bold text-success"><i class="bi bi-plus-circle me-2"></i>Create New Event</h6>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('manager.manage_events') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <div class="mb-3">
+                        <label class="text-white small form-label">Event Title</label>
+                        <input type="text" class="form-control bg-black text-white border-secondary" name="title" required placeholder="Ex: Playtest Royale 2026">
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-white small form-label">Description</label>
+                        <textarea class="form-control bg-black text-white border-secondary" name="description" rows="2" placeholder="Briefly describe the event purpose..."></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label class="text-white small form-label">Badge Image URL</label>
+                        <input type="url" class="form-control bg-black text-white border-secondary" name="badge_url" placeholder="https://media.retroachievements.org/...">
+                    </div>
+                    <button type="submit" class="btn btn-success w-100 fw-bold">Create Event</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        {% for event in events %}
+        <div class="card bg-black border-{{ 'warning' if event.is_active else 'secondary' }} shadow-sm mb-4">
+            <div class="card-header bg-dark border-secondary d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    {% if event.badge_url %}
+                        <img src="{{ event.badge_url }}" class="rounded border border-secondary me-3" style="width: 48px; height: 48px; object-fit: cover;">
+                    {% endif %}
+                    <div>
+                        <h5 class="mb-0 text-white fw-bold">
+                            {{ event.title }}
+                            {% if event.is_active %}
+                                <span class="badge bg-warning text-dark ms-2 small"><i class="bi bi-star-fill"></i> ACTIVE</span>
+                            {% endif %}
+                        </h5>
+                        <small class="text-muted">{{ event.description }}</small>
+                    </div>
+                </div>
+                
+                <div class="d-flex align-items-center gap-3">
+                    <form action="{{ url_for('manager.toggle_event', event_id=event.id) }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        {% if event.is_active %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger px-3">Deactivate</button>
+                        {% else %}
+                            <button type="submit" class="btn btn-sm btn-outline-warning px-3">Set as Active</button>
+                        {% endif %}
+                    </form>
+
+                    <form action="{{ url_for('manager.delete_event', event_id=event.id) }}" method="POST" 
+                          onsubmit="return confirm('ATTENTION: This will delete the event and all linked challenges. Continue?')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" class="btn btn-link text-danger p-0" title="Delete Event Permanently">
+                            <i class="bi bi-trash3-fill fs-5"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <h6 class="text-ra-gold border-bottom border-secondary pb-2 mb-3">Event Challenges</h6>
+                
+                <ul class="list-group list-group-flush mb-4">
+                    {% for challenge in event.challenges %}
+                        <li class="list-group-item bg-black text-white border-secondary d-flex justify-content-between align-items-center px-0">
+                            <div>
+                                <div class="d-flex align-items-center">
+                                    <span class="fw-bold">{{ challenge.title }}</span>
+                                    
+                                    <button type="button" class="btn btn-sm btn-link text-info p-0 ms-2" 
+                                            onclick="editChallenge('{{ challenge.id }}', '{{ challenge.title }}', '{{ challenge.description }}', '{{ challenge.challenge_type }}', '{{ challenge.target_value }}', '{{ challenge.points }}', '{{ challenge.badge_url or '' }}')">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </button>
+                                </div>
+                                
+                                <div class="small text-muted mt-1">
+                                    {{ challenge.description }} | 
+                                    <span class="text-info">Type: {{ challenge.challenge_type }}</span> | 
+                                    Target: {{ challenge.target_value }}
+                                </div>
+                            </div>
+                            
+                            <div class="text-end">
+                                {% if challenge.badge_url %}
+                                    <img src="{{ challenge.badge_url }}" class="rounded me-2" style="width: 24px; height: 24px; object-fit: cover;">
+                                {% endif %}
+                                <span class="badge bg-primary rounded-pill">{{ challenge.points }} pts</span>
+                            </div>
+                        </li>
+                    {% else %}
+                        <li class="list-group-item bg-black text-muted border-0 px-0 fst-italic">No challenges added yet.</li>
+                    {% endfor %}
+                </ul>
+
+                <div class="bg-dark p-3 rounded border border-secondary mt-3">
+                    <h6 class="text-white small mb-3"><i class="bi bi-plus text-success"></i> Add Challenge</h6>
+                    <form action="{{ url_for('manager.add_challenge', event_id=event.id) }}" method="POST" class="row g-2">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        
+                        <div class="col-md-4">
+                            <input type="text" class="form-control form-control-sm bg-black text-white border-secondary" name="title" placeholder="Challenge Title (e.g. Playtester I)" required>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <select class="form-select form-select-sm bg-black text-white border-secondary" name="challenge_type" required>
+                                <option value="auto_reports">Auto: Total Reports</option>
+                                <option value="auto_issues">Auto: Total Issues Found</option>
+                                <option value="auto_validated">Auto: Validated Achs</option>
+                                <option value="manual">Manual Verification</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-2">
+                            <input type="number" class="form-control form-control-sm bg-black text-white border-secondary" name="target_value" placeholder="Target" value="1" required>
+                        </div>
+                        
+                        <div class="col-md-2">
+                            <input type="number" class="form-control form-control-sm bg-black text-white border-secondary" name="points" placeholder="Points" value="10" required>
+                        </div>
+                        
+                        <div class="col-md-1 text-end">
+                            <button type="submit" class="btn btn-sm btn-success w-100"><i class="bi bi-check-lg"></i></button>
+                        </div>
+                        
+                        <div class="col-12 mt-2">
+                            <input type="text" class="form-control form-control-sm bg-black text-white border-secondary" name="description" placeholder="Achievement Description (e.g. Submit 3 reports)">
+                        </div>
+
+                        <div class="col-12 mt-2">
+                            <input type="url" class="form-control form-control-sm bg-black text-white border-secondary" name="badge_url" placeholder="Specific Badge URL (Optional)">
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+        {% else %}
+            <div class="alert alert-dark border-secondary text-center text-muted">
+                No events created yet. Use the side panel to get started!
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+function editChallenge(id, title, desc, type, target, points, badgeUrl) {
+    const form = document.querySelector('form[action*="/challenge"]');
+    
+    if (form) {
+        form.action = `/manager/events/challenge/${id}/edit`;
+        form.querySelector('input[name="title"]').value = title;
+        form.querySelector('input[name="description"]').value = desc;
+        form.querySelector('select[name="challenge_type"]').value = type;
+        form.querySelector('input[name="target_value"]').value = target;
+        form.querySelector('input[name="points"]').value = points;
+        form.querySelector('input[name="badge_url"]').value = badgeUrl;
+        const btn = form.querySelector('button[type="submit"]');
+        btn.classList.replace('btn-success', 'btn-warning');
+        btn.innerHTML = '<i class="bi bi-pencil-square"></i> Update';
+        form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+</script>
+{% endblock %}
