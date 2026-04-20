@@ -300,3 +300,24 @@ def reopen_retest(game_id):
     db.session.commit()
     flash(f"Game '{game.title}' is now back on the Request Board for a second test.", "success")
     return redirect(url_for('manager.history'))
+
+@manager_bp.route('/team/reset/<username>', methods=['POST'])
+def reset_password(username):
+    user = User.query.filter_by(ra_username=username).first()
+    
+    if user:
+        import secrets
+        from datetime import datetime, timedelta
+        
+        token = secrets.token_urlsafe(32)
+        user.invite_token = token
+        user.token_expiry = datetime.utcnow() + timedelta(hours=24)
+        db.session.commit()
+        
+        invite_url = url_for('auth.setup_password', token=token, _external=True)
+        
+        flash(f"Recovery link generated for <b>{username}</b>! Copy and send via DM:<br><input type='text' class='form-control bg-dark text-info mt-2' value='{invite_url}' readonly onclick='this.select()'>", "success")
+    else:
+        flash(f"User {username} not found.", "danger")
+        
+    return redirect(url_for('manager.manage_team'))

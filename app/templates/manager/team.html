@@ -96,9 +96,16 @@
                                 {% elif user.ra_username == session.get('username') %}
                                     <span class="badge bg-dark border border-secondary text-muted">You</span>
                                 {% else %}
-                                    <form action="{{ url_for('manager.delete_user', username=user.ra_username) }}" method="POST" onsubmit="return confirm('Revoke access for {{ user.ra_username }}?')">
+                                    <form action="{{ url_for('manager.reset_password', username=user.ra_username) }}" method="POST" class="d-inline me-1">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">Revoke Access</button>
+                                        <button type="submit" class="btn btn-sm btn-outline-primary" title="Gerar link de nova senha">
+                                            <i class="bi bi-key"></i> Reset
+                                        </button>
+                                    </form>
+                                
+                                    <form action="{{ url_for('manager.delete_user', username=user.ra_username) }}" method="POST" class="d-inline" onsubmit="return confirm('Revogar acesso de {{ user.ra_username }}?')">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Revoke</button>
                                     </form>
                                 {% endif %}
                             </td>
