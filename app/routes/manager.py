@@ -1,5 +1,5 @@
 from app.models import Game, Achievement, TestSession, TestResult, User, GameLog, Event, EventChallenge, UserEventProgress
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from app.services.ra_api import get_developer_level, fetch_game_and_achievements
 from werkzeug.security import generate_password_hash
 from werkzeug.utils import secure_filename
@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from flask import current_app
 from PIL import Image
 from app import db
+import requests
 import secrets
 import json
 import uuid
@@ -109,11 +110,11 @@ def index():
 @manager_bp.route('/engineer')
 def engineer_dashboard():
     if session.get('role') != 'Engineer':
-        flash('Access Denied: This area is exclusive to the Bot_Playtest', 'danger')
-        if session.get('role') == 'Playtest Manager':
-            return redirect(url_for('manager.index'))
+        flash('Acesso Negado.', 'danger')
         return redirect(url_for('dashboard.index'))
-    return render_template('manager/engineer.html')
+    flag_path = os.path.join(current_app.root_path, '..', 'maintenance.flag')
+    is_maintenance_active = os.path.exists(flag_path)
+    return render_template('manager/engineer.html', is_maintenance_active=is_maintenance_active)
 
 @manager_bp.route('/history')
 def history():
@@ -216,6 +217,67 @@ def import_game():
 
     return render_template('manager/import.html')
 
+@manager_bp.route('/engineer/logs')
+def system_logs():
+    if session.get('role') != 'Engineer':
+        flash('Acesso Negado: Área restrita ao Engenheiro de Sistema.', 'danger')
+        return redirect(url_for('dashboard.index'))
+    
+    # Busca os últimos 500 logs globais do sistema
+    logs = GameLog.query.order_by(GameLog.timestamp.desc()).limit(500).all()
+    return render_template('manager/system_logs.html', logs=logs)
+
+@manager_bp.route('/engineer/api_status')
+def api_status():
+    if session.get('role') != 'Engineer':
+        return jsonify({"status": "error", "message": "Unauthorized"}), 403
+    
+    try:
+        # Dá um "ping" real nos servidores do RetroAchievements
+        response = requests.get('https://retroachievements.org/API/API_GetConsoleIDs.php', timeout=5)
+        if response.status_code == 200:
+            return jsonify({"status": "success", "message": "Estável", "latency": response.elapsed.total_seconds()})
+        else:
+            return jsonify({"status": "warning", "message": f"Instável ({response.status_code})"})
+    except requests.exceptions.Timeout:
+        return jsonify({"status": "danger", "message": "Timeout - Servidor Lento"})
+    except Exception as e:
+         return jsonify({"status": "danger", "message": "Falha na Ligação"})
+
+@manager_bp.route('/engineer/maintenance/toggle', methods=['POST'])
+def toggle_maintenance_mode():
+    """Liga/Desliga o ficheiro flag de manutenção e regista no Log."""
+    if session.get('role') != 'Engineer':
+        return jsonify({"status": "error", "message": "Unauthorized"}), 403
+    
+    flag_path = os.path.join(current_app.root_path, '..', 'maintenance.flag')
+    
+    try:
+        if os.path.exists(flag_path):
+            os.remove(flag_path)
+            mode = "off"
+            msg = "Sistema Online."
+            log_action = "Sistema saiu do Modo de Manutenção e está online."
+        else:
+            with open(flag_path, 'w') as f:
+                f.write('maintenance_active')
+            mode = "on"
+            msg = "Sistema em Manutenção."
+            log_action = "Sistema entrou em Modo de Manutenção (Acesso bloqueado para testadores)."
+
+        log = GameLog(
+            game_id=None, 
+            username="System Bot", 
+            action=log_action
+        )
+        db.session.add(log)
+        db.session.commit()
+            
+        return jsonify({"status": "success", "mode": mode, "message": msg})
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": f"Erro ao manipular o estado: {str(e)}"}), 500
 
 @manager_bp.route('/stats')
 def tester_stats():

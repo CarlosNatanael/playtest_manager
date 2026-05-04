@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}System Logs - Playtest Coordinator{% endblock %}
+
+{% block content %}
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <div>
+        <a href="{{ url_for('manager.engineer_dashboard') }}" class="btn btn-outline-secondary btn-sm mb-2">
+            <i class="bi bi-arrow-left"></i> Back to Engineer Center
+        </a>
+        <h2 class="text-white"><i class="bi bi-journal-code text-info me-2"></i>Global Activity Logs</h2>
+        <p class="text-muted small">Monitorização de todas as ações no sistema em tempo real.</p>
+    </div>
+</div>
+
+<div class="card bg-dark border-secondary shadow-lg">
+    <div class="card-header bg-dark border-secondary py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 fw-bold text-info">System Event Stream</h6>
+        <span class="badge bg-secondary text-light">{{ logs|length }} Registos Encontrados</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-dark table-hover table-striped align-middle mb-0">
+                <thead>
+                    <tr class="text-muted small text-uppercase">
+                        <th class="px-4" style="width: 20%;">Timestamp (UTC)</th>
+                        <th style="width: 20%;">Utilizador</th>
+                        <th style="width: 25%;">Jogo Afetado</th>
+                        <th class="px-4">Ação Realizada</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td class="px-4 text-muted small">
+                            <i class="bi bi-clock me-1"></i>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                        </td>
+                        <td>
+                            <span class="text-white fw-bold">{{ log.username }}</span>
+                        </td>
+                        <td>
+                            {% if log.game %}
+                                <a href="{{ url_for('dashboard.view_game', game_id=log.game.id) }}" class="text-decoration-none text-ra-blue">
+                                    {{ log.game.title }}
+                                </a>
+                            {% else %}
+                                <span class="text-muted fst-italic">Sistema Geral</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4">
+                            <span class="text-light">{{ log.action }}</span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-5">
+                            <i class="bi bi-clipboard-x fs-1 d-block mb-3"></i>
+                            Nenhum registo de atividade encontrado.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

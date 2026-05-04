@@ -57,7 +57,9 @@
                             <span class="text-white d-block">Status de Sincronização da API</span>
                             <small class="text-muted">Conexão com RetroAchievements.org</small>
                         </div>
-                        <span class="badge bg-success-subtle text-success border border-success px-3">Estável</span>
+                        <button id="apiStatusBtn" class="btn btn-sm btn-outline-success" onclick="checkApiStatus()">
+                            <i class="bi bi-activity"></i> Verificar Status
+                        </button>
                     </li>
                     <li class="list-group-item bg-dark border-secondary py-3 d-flex justify-content-between align-items-center">
                         <div>
@@ -69,9 +71,9 @@
                     <li class="list-group-item bg-dark border-secondary py-3 d-flex justify-content-between align-items-center">
                         <div>
                             <span class="text-white d-block">Logs de Atividade do Bot</span>
-                            <small class="text-muted">Última ação automatizada: Importação de Set #21403</small>
+                            <small class="text-muted">Histórico global de ações do sistema</small>
                         </div>
-                        <button class="btn btn-sm btn-outline-secondary">Ver Logs</button>
+                        <a href="{{ url_for('manager.system_logs') }}" class="btn btn-sm btn-outline-info">Ver Logs</a>
                     </li>
                     <li class="list-group-item bg-dark border-secondary py-3 d-flex justify-content-between align-items-center">
                         <div>
@@ -88,17 +90,98 @@
     <div class="col-lg-4">
         <div class="card bg-dark border-info shadow-sm">
             <div class="card-body">
-                <h6 class="text-info fw-bold mb-3"><i class="bi bi-info-circle-fill me-2"></i>Nota do Engenheiro</h6>
+                <h6 class="text-info fw-bold mb-3"><i class="bi bi-tools me-2"></i>Nota do Engenheiro / Manutenção</h6>
                 <p class="text-muted small">
-                    Esta área é restrita aos mantenedores do sistema. Ações realizadas aqui podem ignorar verificações de validação padrão. 
-                    Use a visão de <strong>Gerente de QA</strong> para a logística diária de testes.
+                    Esta área é restrita aos mantenedores do sistema. Ative este modo para realizar atualizações críticas. Utilizadores comuns verão uma tela de aviso.
                 </p>
                 <hr class="border-secondary">
-                <div class="d-grid">
-                    <button class="btn btn-outline-warning btn-sm fw-bold"><i class="bi bi-bug"></i> Depurar Estado do Sistema</button>
+                <div class="d-grid gap-2">
+                    {% if is_maintenance_active %}
+                        <button id="maintenanceBtn" class="btn btn-danger btn-sm fw-bold" onclick="toggleMaintenance()">
+                            <i class="bi bi-tools"></i> Desativar Modo Manutenção
+                        </button>
+                    {% else %}
+                        <button id="maintenanceBtn" class="btn btn-outline-warning btn-sm fw-bold" onclick="toggleMaintenance()">
+                            <i class="bi bi-bug"></i> Ativar Modo Manutenção
+                        </button>
+                    {% endif %}
+                </div>
+                
+                <div id="m-status" class="mt-3 text-center small" style="display: {% if is_maintenance_active %}block{% else %}none{% endif %};">
+                    <span class="text-danger fw-bold"><i class="bi bi-exclamation-triangle"></i> SITE OFFLINE PARA TESTADORES</span>
                 </div>
             </div>
         </div>
     </div>
 </div>
+<script>
+function checkApiStatus() {
+    const btn = document.getElementById('apiStatusBtn');
+    
+    // Muda o botão para "carregando"
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Testando...';
+    btn.className = 'btn btn-sm btn-warning text-dark fw-bold';
+
+    // Chama a rota do Python nos bastidores
+    fetch("{{ url_for('manager.api_status') }}")
+        .then(response => response.json())
+        .then(data => {
+            if(data.status === 'success') {
+                btn.className = 'btn btn-sm btn-success fw-bold';
+                btn.innerHTML = `<i class="bi bi-check-circle-fill"></i> ${data.message} (${data.latency.toFixed(2)}s)`;
+            } else {
+                btn.className = 'btn btn-sm btn-danger fw-bold';
+                btn.innerHTML = `<i class="bi bi-x-circle-fill"></i> ${data.message}`;
+            }
+        })
+        .catch(error => {
+            btn.className = 'btn btn-sm btn-danger fw-bold';
+            btn.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Erro Local';
+        });
+}
+function toggleMaintenance() {
+    // Pede confirmação antes de derrubar o site
+    if(!confirm("Mudar o estado de manutenção irá afetar o acesso de todos os utilizadores (exceto Engenheiros). Continuar?")) return;
+    
+    const btn = document.getElementById('maintenanceBtn');
+    const statusText = document.getElementById('m-status');
+    
+    // Desativa o botão enquanto carrega para evitar cliques duplos
+    btn.disabled = true;
+    
+    // Chama a rota do Python
+    fetch("{{ url_for('manager.toggle_maintenance_mode') }}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.status === 'success') {
+            // Se ativou a manutenção (ON)
+            if(data.mode === 'on') {
+                btn.className = 'btn btn-danger btn-sm fw-bold';
+                btn.innerHTML = '<i class="bi bi-tools"></i> Desativar Modo Manutenção';
+                statusText.style.display = 'block';
+                statusText.innerHTML = '<span class="text-danger fw-bold"><i class="bi bi-exclamation-triangle"></i> SITE OFFLINE PARA TESTADORES</span>';
+            } 
+            // Se desativou a manutenção (OFF)
+            else {
+                btn.className = 'btn btn-outline-warning btn-sm fw-bold';
+                btn.innerHTML = '<i class="bi bi-bug"></i> Ativar Modo Manutenção';
+                statusText.style.display = 'none';
+            }
+        } else {
+            alert("Erro ao alterar o modo de manutenção: " + data.message);
+        }
+        btn.disabled = false;
+    })
+    .catch(error => {
+        alert("Erro de conexão.");
+        btn.disabled = false;
+    });
+}
+</script>
 {% endblock %}
