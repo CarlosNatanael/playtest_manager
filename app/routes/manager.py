@@ -277,7 +277,12 @@ def toggle_maintenance_mode():
     
     except Exception as e:
         db.session.rollback()
-        return jsonify({"status": "error", "message": f"Erro ao manipular o estado: {str(e)}"}), 500
+        current_app.logger.error(f"Erro na manutenção: {str(e)}")
+        
+        return jsonify({
+            "status": "error", 
+            "message": "Ocorreu um erro interno ao alterar o estado do sistema."
+        }), 500
 
 @manager_bp.route('/stats')
 def tester_stats():
@@ -635,4 +640,8 @@ def maintenance_cleanup():
         return jsonify({"status": "success", "message": f"Limpeza concluída! {count} sessões removidas."})
     except Exception as e:
         db.session.rollback()
-        return jsonify({"status": "error", "message": str(e)}), 500
+        current_app.logger.error(f"Erro no DB Cleanup: {str(e)}")
+        return jsonify({
+            "status": "error", 
+            "message": "Falha ao executar a limpeza do banco de dados."
+        }), 500
