@@ -281,7 +281,7 @@ def toggle_maintenance_mode():
 
 @manager_bp.route('/stats')
 def tester_stats():
-    testers = User.query.all()
+    testers = User.query.filter(User.ra_username != 'Bot').all()
     stats_data = []
     
     for tester in testers:

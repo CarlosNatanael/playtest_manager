@@ -33,6 +33,22 @@
             {% for session in active_sessions %}
             <div class="col-md-6 col-lg-4">
                 <div class="card h-100 shadow-sm border-primary">
+                    {% if session.days_remaining is not none and session.days_remaining <= 2 %}
+                    <div class="alert alert-warning border-warning p-2 mb-3 shadow-sm rounded" style="background-color: #ffda6a; color: #333;">
+                        <h6 class="mb-1 fw-bold"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>Test Expiring!</h6>
+                        <small class="d-block mb-2 text-dark">
+                            Your reservation expires in <strong>{{ session.days_remaining }} day(s)</strong>.
+                        </small>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-success fw-bold w-100" onclick="renewSession({{ session.id }})">
+                                <i class="bi bi-arrow-clockwise"></i> Renew Deadline
+                            </button>
+                            <a href="{{ url_for('dashboard.abandon_session', session_id=session.id) }}" class="btn btn-sm btn-danger fw-bold w-100" onclick="return confirm('Are you sure you want to abandon this set and return it to the queue?')">
+                                <i class="bi bi-trash"></i> Abandon
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
                     <div class="card-body">
                         <div class="d-flex mb-3">
                             <img src="https://media.retroachievements.org{{ session.game.image_icon }}" alt="Cover" class="rounded me-3 border border-secondary" style="width: 64px; height: 64px; object-fit: cover;">
@@ -187,4 +203,28 @@
     background-color: #7819c1 !important;
     }
 </style>
+<script>
+function renewSession(sessionId) {
+    if(!confirm("Do you want to renew your reservation for this game for another 2 weeks?")) return;
+    
+    fetch(`{{ url_for('dashboard.renew_session', session_id=0) }}`.replace('0', sessionId), {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.status === 'success') {
+            window.location.reload(); 
+        } else {
+            alert("Error: " + data.message);
+        }
+    })
+    .catch(error => {
+        alert("Server connection error.");
+    });
+}
+</script>
 {% endblock %}

@@ -204,7 +204,7 @@ class GameLog(db.Model):
     __tablename__ = 'game_logs'
 
     id = db.Column(db.Integer, primary_key=True)
-    game_id = db.Column(db.Integer, db.ForeignKey('games.id'), nullable=False)
+    game_id = db.Column(db.Integer, db.ForeignKey('games.id'), nullable=True) 
     username = db.Column(db.String(100), nullable=False)
     action = db.Column(db.String(200), nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)

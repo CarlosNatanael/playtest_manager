@@ -81,7 +81,7 @@ def claim_game(game_id):
         game_id=game.id,
         status='Active',
         started_at=datetime.utcnow(),
-        expires_at=datetime.utcnow() + timedelta(days=7)
+        expires_at=datetime.utcnow() + timedelta(days=14)
     )
     
     game.status = 'In Progress'
@@ -170,6 +170,15 @@ def save_session(session_id):
 
             result.notes = data.get(f'note_{ach.id}')
             result.save_state_link = data.get(f'link_{ach.id}')
+    
+    test_session.expires_at = datetime.utcnow() + timedelta(days=14)
+
+    log = GameLog(
+        game_id=test_session.game_id, 
+        username=session.get('username'), 
+        action="Progress saved and trial period automatically renewed."
+    )
+    db.session.add(log)
             
     db.session.commit()
     return redirect(url_for('dashboard.index'))
@@ -178,7 +187,6 @@ def save_session(session_id):
 def autosave(session_id):
     test_session = TestSession.query.get_or_404(session_id) 
     
-    # SEGURANÇA: Validar Posse para o Autosave
     if test_session.user_id != session.get('user_id'):
         return jsonify({"status": "error", "message": "Unauthorized"}), 403
         
@@ -218,6 +226,8 @@ def autosave(session_id):
     if 'checklist_data' in data:
         test_session.checklist_data = data['checklist_data']
     
+    test_session.expires_at = datetime.utcnow() + timedelta(days=14)
+
     db.session.commit()
     return jsonify({"status": "success"})
 
@@ -232,7 +242,6 @@ def abandon_session(session_id):
         
     test_session.status = 'Abandoned'
     
-    # LÓGICA DE COLLAB: Só volta a 'Open' se não houver mais ninguém testando
     other_active = TestSession.query.filter(
         TestSession.game_id == test_session.game_id,
         TestSession.status == 'Active',
@@ -248,6 +257,26 @@ def abandon_session(session_id):
     
     flash("You have abandoned the test. The game is back on the Request Board.", "warning")
     return redirect(url_for('dashboard.index'))
+
+@dashboard_bp.route('/renew_session/<int:session_id>', methods=['POST'])
+def renew_session(session_id):
+    test_session = TestSession.query.get_or_404(session_id)
+    
+    if test_session.user_id != session.get('user_id'):
+        return jsonify({"status": "error", "message": "Acesso Negado."}), 403
+    
+    test_session.expires_at = datetime.utcnow() + timedelta(days=14)
+    
+    # 👇 ADICIONA O LOG DE AUDITORIA AQUI
+    log = GameLog(
+        game_id=test_session.game_id, 
+        username=session.get('username'), 
+        action="Manually extended the trial period for another 14 days."
+    )
+    db.session.add(log)
+    
+    db.session.commit()
+    return jsonify({"status": "success", "message": "Reservation renewed!"})
 
 @dashboard_bp.route('/conclude/<int:session_id>')
 def conclude_session(session_id):
