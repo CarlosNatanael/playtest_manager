@@ -645,3 +645,39 @@ def maintenance_cleanup():
             "status": "error", 
             "message": "Falha ao executar a limpeza do banco de dados."
         }), 500
+
+@manager_bp.route('/events/<int:event_id>/monitor')
+def monitor_event(event_id):
+    event = Event.query.get_or_404(event_id)
+    testers = User.query.filter(User.ra_username != 'Bot', User.is_active == True).all()
+    
+    tester_progress = []
+    
+    for tester in testers:
+        challenges_data = []
+        
+        for challenge in event.challenges:
+            progress = UserEventProgress.query.filter_by(
+                user_id=tester.id, 
+                challenge_id=challenge.id
+            ).first()
+            
+            current_val = progress.current_value if progress else 0
+            is_completed = progress.is_completed if progress else False
+            target = challenge.target_value if challenge.target_value > 0 else 1
+            
+            percent = min(int((current_val / target) * 100), 100)
+            
+            challenges_data.append({
+                'title': challenge.title,
+                'current': current_val,
+                'target': target,
+                'percent': percent,
+                'completed': is_completed
+            })
+            
+        tester_progress.append({
+            'tester': tester,
+            'challenges': challenges_data
+        })
+    return render_template('manager/event_monitor.html', event=event, tester_progress=tester_progress)

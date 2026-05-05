@@ -104,6 +104,9 @@
                             <button type="submit" class="btn btn-sm btn-outline-warning px-3">Set as Active</button>
                         {% endif %}
                     </form>
+                    <a href="{{ url_for('manager.monitor_event', event_id=event.id) }}" class="btn btn-sm btn-info fw-bold">
+                        <i class="bi bi-bar-chart-fill"></i> Control Room
+                    </a>
 
                     <form action="{{ url_for('manager.delete_event', event_id=event.id) }}" method="POST" 
                           onsubmit="return confirm('ATTENTION: This will delete the event and all linked challenges. Continue?')">

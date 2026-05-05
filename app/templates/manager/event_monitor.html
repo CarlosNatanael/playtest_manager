@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Event Monitor | Manager{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="text-white mb-0"><i class="bi bi-broadcast me-2 text-info"></i>Monitoring: {{ event.title }}</h2>
+        <span class="text-muted">Real-time Playtester progress tracking</span>
+    </div>
+    <a href="{{ url_for('manager.manage_events') }}" class="btn btn-outline-secondary fw-bold text-white">
+        <i class="bi bi-arrow-left"></i> Back to Events
+    </a>
+</div>
+
+<div class="card shadow border-info bg-dark mb-4">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-dark table-hover mb-0 align-middle">
+                <thead class="table-active text-info">
+                    <tr>
+                        <th style="width: 25%;">Playtester</th>
+                        <th style="width: 75%;">Challenge Progress</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in tester_progress %}
+                    <tr>
+                        <!-- Tester Column -->
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img src="https://media.retroachievements.org/UserPic/{{ item.tester.image_username or item.tester.ra_username }}.png" 
+                                     class="rounded-circle me-3 border border-secondary" 
+                                     style="width: 48px; height: 48px; object-fit: cover;"
+                                     onerror="this.src='https://media.retroachievements.org/UserPic/RetroAchievements.png'">
+                                <div>
+                                    <span class="d-block fw-bold fs-6 text-white">{{ item.tester.ra_username }}</span>
+                                    <span class="badge bg-secondary" style="font-size: 0.7em;">{{ item.tester.role }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        
+                        <!-- Challenges Column (Progress Bars) -->
+                        <td>
+                            <div class="d-flex flex-column gap-3 py-2">
+                                {% for challenge in item.challenges %}
+                                <div>
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <small class="fw-bold {{ 'text-success' if challenge.completed else 'text-light' }}">
+                                            {% if challenge.completed %}<i class="bi bi-check-circle-fill me-1"></i>{% endif %}
+                                            {{ challenge.title }}
+                                        </small>
+                                        <small class="text-muted">{{ challenge.current }} / {{ challenge.target }}</small>
+                                    </div>
+                                    <div class="progress" style="height: 10px; background-color: #2b3035;">
+                                        <div class="progress-bar {{ 'bg-success' if challenge.completed else 'bg-info progress-bar-striped progress-bar-animated' }}" 
+                                             role="progressbar" 
+                                             style="width: {{ challenge.percent }}%;" 
+                                             aria-valuenow="{{ challenge.percent }}" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <span class="text-muted small">No challenges registered for this event.</span>
+                                {% endfor %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
