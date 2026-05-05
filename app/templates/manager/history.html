@@ -53,10 +53,14 @@
                     </td>
                     <td>
                         <div class="small text-white">
-                            {% if test_session and test_session.concluded_at %}
-                                {{ test_session.concluded_at.strftime('%d/%m/%Y') }}
+                            {# Buscamos as sessões deste jogo no mapa #}
+                            {% set game_sessions = sessions_map.get(game.id, []) %}
+                            
+                            {# Verificamos se existe pelo menos uma sessão e se ela tem data de conclusão #}
+                            {% if game_sessions and game_sessions[0].concluded_at %}
+                                {{ game_sessions[0].concluded_at.strftime('%d/%m/%Y') }}
                             {% else %}
-                                ---
+                                <span class="text-muted">---</span>
                             {% endif %}
                         </div>
                     </td>
