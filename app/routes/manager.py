@@ -598,3 +598,41 @@ def save_and_compress_image(upload_file):
     except Exception as e:
         print(f"Error processing image: {e}")
         return None
+    
+@manager_bp.route('/engineer/maintenance/cleanup', methods=['POST'])
+def maintenance_cleanup():
+    if session.get('role') != 'Engineer':
+        return jsonify({"status": "error", "message": "Acesso Negado"}), 403
+    
+    try:
+        now = datetime.utcnow()
+        expired_sessions = TestSession.query.filter(
+            TestSession.status == 'Active',
+            TestSession.expires_at < now
+        ).all()
+        
+        count = 0
+        for ts in expired_sessions:
+            ts.status = 'Expired'
+            count += 1
+            log = GameLog(
+                game_id=ts.game_id, 
+                username="System Bot", 
+                action=f"Sessão de {ts.tester.ra_username} encerrada por inatividade (Prazo excedido)."
+            )
+            db.session.add(log)
+            
+            other_active = TestSession.query.filter(
+                TestSession.game_id == ts.game_id,
+                TestSession.status == 'Active',
+                TestSession.id != ts.id
+            ).first()
+
+            if not other_active:
+                ts.game.status = 'Open'
+
+        db.session.commit()
+        return jsonify({"status": "success", "message": f"Limpeza concluída! {count} sessões removidas."})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
