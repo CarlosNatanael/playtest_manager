@@ -100,7 +100,7 @@ class Game(db.Model):
         'Saturn': 'sat',
         'Sega CD': 'scd',
         'Master System': 'sms',
-        'Super Nintendo Entertainment System': 'snes',
+        'SNES/Super Famicom': 'snes',
         'TI-83': 'ti-83',
         'TIC-80': 'tic-80',
         'Wii': 'wii',
