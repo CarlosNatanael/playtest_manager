@@ -19,8 +19,9 @@
             <table class="table table-dark table-hover mb-0 align-middle">
                 <thead class="table-active text-info">
                     <tr>
-                        <th style="width: 25%;">Playtester</th>
-                        <th style="width: 75%;">Challenge Progress</th>
+                        <th style="width: 20%;">Playtester</th>
+                        <th style="width: 30%;">Event Points</th>
+                        <th style="width: 50%;">Challenge Progress</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -40,6 +41,38 @@
                             </div>
                         </td>
                         
+                        <!-- Points Column -->
+                        <td>
+                            <div class="mb-2">
+                                <span class="badge bg-warning text-dark fs-6">
+                                    <i class="bi bi-trophy-fill"></i> {{ item.total_points }} pts
+                                </span>
+                            </div>
+                            <form action="{{ url_for('manager.add_event_points', event_id=event.id) }}" method="POST" class="d-flex gap-1 mb-2">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <input type="hidden" name="user_id" value="{{ item.tester.id }}">
+                                <input type="number" name="points" class="form-control form-control-sm bg-black text-white border-secondary"
+                                       style="width: 80px;" placeholder="pts" required title="Use a negative value to correct a mistake">
+                                <input type="text" name="note" maxlength="200" class="form-control form-control-sm bg-black text-white border-secondary"
+                                       placeholder="Note (e.g. game name)">
+                                <button type="submit" class="btn btn-sm btn-success" title="Add points"><i class="bi bi-plus-lg"></i></button>
+                            </form>
+                            {% for log in item.recent_logs %}
+                            <div class="d-flex justify-content-between align-items-center small text-muted">
+                                <span>
+                                    <span class="{{ 'text-success' if log.points > 0 else 'text-danger' }} fw-bold">{{ '%+d'|format(log.points) }}</span>
+                                    {% if log.note %}· {{ log.note }}{% endif %}
+                                    <span class="ms-1" style="font-size: 0.7em;">{{ log.created_at.strftime('%d/%m') }}</span>
+                                </span>
+                                <form action="{{ url_for('manager.delete_event_points', log_id=log.id) }}" method="POST"
+                                      onsubmit="return confirm('Remove this points entry?')">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="btn btn-link text-danger p-0" title="Remove entry"><i class="bi bi-x-circle"></i></button>
+                                </form>
+                            </div>
+                            {% endfor %}
+                        </td>
+
                         <!-- Challenges Column (Progress Bars) -->
                         <td>
                             <div class="d-flex flex-column gap-3 py-2">

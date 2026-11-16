@@ -107,6 +107,11 @@
             <div class="modal-body p-4" style="background-color: #0d0e12;">
                 <p class="text-muted mb-4">{{ active_event.description }}</p>
 
+                <div class="d-flex justify-content-between align-items-center mb-4 p-3 rounded border border-warning" style="background-color: #1a1d24;">
+                    <span class="text-white fw-bold"><i class="bi bi-trophy-fill text-warning me-2"></i>Your event points</span>
+                    <span class="badge bg-warning text-dark fs-5">{{ event_points|default(0) }} pts</span>
+                </div>
+
                 <div class="d-flex flex-column gap-4">
                     {% for challenge in active_event.challenges %}
                         {% set user_prog = challenge.progress|selectattr('user_id', 'equalto', session.get('user_id'))|first %}
