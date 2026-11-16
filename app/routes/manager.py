@@ -1,4 +1,4 @@
-from app.models import Game, Achievement, TestSession, TestResult, User, GameLog, Event, EventChallenge, UserEventProgress
+from app.models import Game, Achievement, TestSession, TestResult, User, GameLog, Event, EventChallenge, UserEventProgress, EventPointLog
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from app.services.ra_api import get_developer_level, fetch_game_and_achievements
 from werkzeug.security import generate_password_hash
@@ -17,6 +17,21 @@ manager_bp = Blueprint('manager', __name__)
 
 def get_allowed_users_path():
     return os.path.join(current_app.instance_path, 'allowed_users.json')
+
+def get_event_points(user_id, event_id):
+    """Total de pontos de evento lançados para um tester em um evento."""
+    total = db.session.query(db.func.coalesce(db.func.sum(EventPointLog.points), 0)).filter(
+        EventPointLog.user_id == user_id,
+        EventPointLog.event_id == event_id
+    ).scalar()
+    return int(total or 0)
+
+def get_event_points_map(event_id):
+    """{user_id: total} de todos os testers de um evento, em uma única query."""
+    rows = db.session.query(EventPointLog.user_id, db.func.sum(EventPointLog.points)).filter(
+        EventPointLog.event_id == event_id
+    ).group_by(EventPointLog.user_id).all()
+    return {user_id: int(total or 0) for user_id, total in rows}
 
 @manager_bp.route('/team', methods=['GET', 'POST'])
 def manage_team():
@@ -426,8 +441,10 @@ def manage_events():
     events = Event.query.order_by(Event.start_date.desc()).all()
     active_event = Event.query.filter_by(is_active=True).first()
     pending_approvals = []
-    
+    points_by_user = {}
+
     if active_event:
+        points_by_user = get_event_points_map(active_event.id)
         # Busca progressos de desafios MANUAIS que ainda NÃO estão completos
         pending_approvals = UserEventProgress.query.join(EventChallenge).filter(
             EventChallenge.event_id == active_event.id,
@@ -435,9 +452,10 @@ def manage_events():
             UserEventProgress.is_completed == False
         ).all()
 
-    return render_template('manager/events.html', 
-                           events=events, 
-                           pending_approvals=pending_approvals)
+    return render_template('manager/events.html',
+                           events=events,
+                           pending_approvals=pending_approvals,
+                           points_by_user=points_by_user)
 
 @manager_bp.route('/events/<int:event_id>/toggle', methods=['POST'])
 def toggle_event(event_id):
@@ -652,7 +670,8 @@ def monitor_event(event_id):
     testers = User.query.filter(User.ra_username != 'Bot', User.is_active == True).all()
     
     tester_progress = []
-    
+    points_map = get_event_points_map(event.id)
+
     for tester in testers:
         challenges_data = []
         
@@ -676,8 +695,61 @@ def monitor_event(event_id):
                 'completed': is_completed
             })
             
+        recent_logs = EventPointLog.query.filter_by(
+            user_id=tester.id, event_id=event.id
+        ).order_by(EventPointLog.created_at.desc(), EventPointLog.id.desc()).limit(5).all()
+
         tester_progress.append({
             'tester': tester,
-            'challenges': challenges_data
+            'challenges': challenges_data,
+            'total_points': points_map.get(tester.id, 0),
+            'recent_logs': recent_logs
         })
     return render_template('manager/event_monitor.html', event=event, tester_progress=tester_progress)
+
+@manager_bp.route('/events/<int:event_id>/points', methods=['POST'])
+def add_event_points(event_id):
+    if session.get('role') not in ('Playtest Manager', 'Engineer'):
+        flash('Access Denied: only managers can award event points.', 'danger')
+        return redirect(url_for('dashboard.index'))
+
+    event = Event.query.get_or_404(event_id)
+    tester = User.query.get_or_404(request.form.get('user_id', type=int))
+
+    try:
+        points = int(request.form.get('points', ''))
+    except ValueError:
+        flash('Invalid points value.', 'danger')
+        return redirect(url_for('manager.monitor_event', event_id=event.id))
+
+    if points == 0 or abs(points) > 100000:
+        flash('Enter a non-zero points value (use a negative number to correct a mistake).', 'warning')
+        return redirect(url_for('manager.monitor_event', event_id=event.id))
+
+    note = (request.form.get('note') or '').strip()[:200] or None
+
+    db.session.add(EventPointLog(
+        user_id=tester.id,
+        event_id=event.id,
+        points=points,
+        note=note,
+        created_by=session.get('username')
+    ))
+    db.session.commit()
+
+    total = get_event_points(tester.id, event.id)
+    flash(f"{points:+d} pts for {tester.ra_username}. Total in '{event.title}': {total} pts.", "success")
+    return redirect(url_for('manager.monitor_event', event_id=event.id))
+
+@manager_bp.route('/events/points/<int:log_id>/delete', methods=['POST'])
+def delete_event_points(log_id):
+    if session.get('role') not in ('Playtest Manager', 'Engineer'):
+        flash('Access Denied: only managers can edit event points.', 'danger')
+        return redirect(url_for('dashboard.index'))
+
+    log = EventPointLog.query.get_or_404(log_id)
+    event_id = log.event_id
+    db.session.delete(log)
+    db.session.commit()
+    flash('Points entry removed.', 'info')
+    return redirect(url_for('manager.monitor_event', event_id=event_id))

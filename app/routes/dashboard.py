@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, session
 from app.models import Game, TestSession, db, TestResult, GameLog, Event
 from app.services.ra_api import validate_game_hash
-from app.routes.manager import sync_event_progress
+from app.routes.manager import sync_event_progress, get_event_points
 from datetime import datetime, timedelta
 import json
 
@@ -14,8 +14,10 @@ def index():
     if not user_id:
         return redirect(url_for('auth.login'))
     
+    event_points = 0
     if active_event and 'user_id' in session:
         sync_event_progress(session['user_id'])
+        event_points = get_event_points(session['user_id'], active_event.id)
 
     open_games = Game.query.filter(
         db.or_(
@@ -30,7 +32,8 @@ def index():
                            open_games=open_games, 
                            active_sessions=active_sessions,
                            active_game_ids=active_game_ids,
-                           active_event=active_event)
+                           active_event=active_event,
+                           event_points=event_points)
 
 @dashboard_bp.before_request
 def restrict_dashboard_access():

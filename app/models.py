@@ -160,6 +160,23 @@ class UserEventProgress(db.Model):
     is_completed = db.Column(db.Boolean, default=False)
     completed_at = db.Column(db.DateTime, nullable=True)
 
+class EventPointLog(db.Model):
+    """Pontos de evento lançados manualmente pelo manager para um playtester.
+    O total do tester no evento é a soma de todos os lançamentos (pode haver
+    valores negativos para correções)."""
+    __tablename__ = 'event_point_logs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    event_id = db.Column(db.Integer, db.ForeignKey('events.id'), nullable=False)
+    points = db.Column(db.Integer, nullable=False)
+    note = db.Column(db.String(200), nullable=True)
+    created_by = db.Column(db.String(100), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('event_point_logs', lazy=True, cascade="all, delete-orphan"))
+    event = db.relationship('Event', backref=db.backref('point_logs', lazy=True, cascade="all, delete-orphan"))
+
 class TestSession(db.Model):
     __tablename__ = 'test_sessions'
     
