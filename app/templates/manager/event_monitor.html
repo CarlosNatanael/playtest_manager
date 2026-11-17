@@ -13,6 +13,13 @@
     </a>
 </div>
 
+{% if ready_total %}
+<div class="alert alert-warning d-flex align-items-center fw-bold mb-3">
+    <i class="bi bi-patch-check-fill fs-5 me-2"></i>
+    {{ ready_total }} level{{ 's' if ready_total != 1 }} ready to release. Playtesters with levels to release are listed first.
+</div>
+{% endif %}
+
 <div class="card shadow border-info bg-dark mb-4">
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -26,7 +33,7 @@
                 </thead>
                 <tbody>
                     {% for item in tester_progress %}
-                    <tr>
+                    <tr id="tester-{{ item.tester.id }}">
                         <!-- Tester Column -->
                         <td>
                             <div class="d-flex align-items-center">
@@ -37,6 +44,9 @@
                                 <div>
                                     <span class="d-block fw-bold fs-6 text-white">{{ item.tester.ra_username }}</span>
                                     <span class="badge bg-secondary" style="font-size: 0.7em;">{{ item.tester.role }}</span>
+                                    {% if item.ready_count %}
+                                    <span class="badge bg-warning text-dark" style="font-size: 0.7em;">{{ item.ready_count }} to release</span>
+                                    {% endif %}
                                 </div>
                             </div>
                         </td>
@@ -78,12 +88,42 @@
                             <div class="d-flex flex-column gap-3 py-2">
                                 {% for challenge in item.challenges %}
                                 <div>
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <div class="d-flex justify-content-between align-items-center mb-1 gap-2">
                                         <small class="fw-bold {{ 'text-success' if challenge.completed else 'text-light' }}">
                                             {% if challenge.completed %}<i class="bi bi-check-circle-fill me-1"></i>{% endif %}
                                             {{ challenge.title }}
+                                            {% if challenge.is_manual %}
+                                            <span class="badge {{ 'bg-warning text-dark' if challenge.ready else 'bg-secondary' }} ms-1" style="font-size: 0.7em;"
+                                                  title="Points needed for this level">{{ challenge.required_points }} pts</span>
+                                            {% endif %}
                                         </small>
-                                        <small class="text-muted">{{ challenge.current }} / {{ challenge.target }}</small>
+                                        <span class="d-flex align-items-center gap-2">
+                                            <small class="text-muted">{{ challenge.current }} / {{ challenge.target }}</small>
+                                            {% if challenge.is_manual %}
+                                            {% if challenge.completed %}
+                                                {% set confirm_msg = "Take back '" ~ challenge.title ~ "' from " ~ item.tester.ra_username ~ "?" %}
+                                            {% elif not challenge.ready %}
+                                                {% set confirm_msg = item.tester.ra_username ~ " has " ~ item.total_points ~ " of " ~ challenge.required_points ~ " pts. Release anyway?" %}
+                                            {% else %}
+                                                {% set confirm_msg = "" %}
+                                            {% endif %}
+                                            <form action="{{ url_for('manager.set_challenge_status', event_id=event.id, challenge_id=challenge.id) }}" method="POST" class="m-0"
+                                                  {% if confirm_msg %}onsubmit="return confirm({{ confirm_msg|tojson|forceescape }})"{% endif %}>
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                                <input type="hidden" name="user_id" value="{{ item.tester.id }}">
+                                                {% if challenge.completed %}
+                                                <input type="hidden" name="action" value="revoke">
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary py-0 px-1" title="Take back this level"><i class="bi bi-arrow-counterclockwise"></i></button>
+                                                {% else %}
+                                                <input type="hidden" name="action" value="approve">
+                                                <button type="submit" class="btn btn-sm {{ 'btn-success' if challenge.ready else 'btn-outline-success' }} py-0 px-2"
+                                                        title="{{ 'Goal reached: release level' if challenge.ready else 'Release level (goal not reached yet)' }}">
+                                                    <i class="bi bi-check-lg"></i> Release
+                                                </button>
+                                                {% endif %}
+                                            </form>
+                                            {% endif %}
+                                        </span>
                                     </div>
                                     <div class="progress" style="height: 10px; background-color: #2b3035;">
                                         <div class="progress-bar {{ 'bg-success' if challenge.completed else 'bg-info progress-bar-striped progress-bar-animated' }}" 
