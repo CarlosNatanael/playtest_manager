@@ -44,41 +44,23 @@
                 </form>
             </div>
         </div>
+        {% if active_event %}
         <div class="card bg-dark border-warning shadow-sm">
-            <div class="card-header bg-dark border-warning">
-                <h6 class="m-0 fw-bold text-warning"><i class="bi bi-patch-check-fill me-2"></i>Pending Approvals</h6>
-            </div>
-            <div class="card-body p-0">
-                <ul class="list-group list-group-flush">
-                    {% for approval in pending_approvals %}
-                    <li class="list-group-item bg-dark text-white border-secondary p-3">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <span class="text-ra-blue fw-bold d-block">
-                                    {{ approval.tester_progress.ra_username }}
-                                    <span class="badge bg-warning text-dark ms-1" title="Event points so far">
-                                        <i class="bi bi-trophy-fill"></i> {{ points_by_user.get(approval.user_id, 0) }} pts
-                                    </span>
-                                </span>
-                                <small class="text-muted">{{ approval.challenge.title }}</small>
-                            </div>
-                            <form action="{{ url_for('manager.approve_manual_challenge', progress_id=approval.id) }}" method="POST">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                <button type="submit" class="btn btn-sm btn-success" title="Approve Points">
-                                    <i class="bi bi-check-lg"></i>
-                                </button>
-                            </form>
-                        </div>
-                    </li>
-                    {% else %}
-                    <li class="list-group-item bg-dark text-muted text-center py-4 small">
-                        <i class="bi bi-check2-all d-block fs-4 mb-2"></i>
-                        No pending approvals.
-                    </li>
-                    {% endfor %}
-                </ul>
+            <div class="card-body text-center py-4">
+                <i class="bi bi-patch-check-fill fs-2 text-warning d-block mb-2"></i>
+                {% if ready_to_release %}
+                <div class="fs-5 fw-bold text-white">{{ ready_to_release }} level{{ 's' if ready_to_release != 1 }} ready to release</div>
+                <div class="small text-muted mb-3">Playtesters who already reached the points goal.</div>
+                {% else %}
+                <div class="fw-bold text-white">No levels ready to release</div>
+                <div class="small text-muted mb-3">Award points and release levels in the Control Room.</div>
+                {% endif %}
+                <a href="{{ url_for('manager.monitor_event', event_id=active_event.id) }}" class="btn btn-warning fw-bold text-dark">
+                    <i class="bi bi-broadcast me-1"></i> Open Control Room
+                </a>
             </div>
         </div>
+        {% endif %}
     </div>
 
     <div class="col-lg-8">

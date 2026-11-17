@@ -1,5 +1,5 @@
 from app.models import Game, Achievement, TestSession, TestResult, User, GameLog, Event, EventChallenge, UserEventProgress, EventPointLog
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify, abort
 from app.services.ra_api import get_developer_level, fetch_game_and_achievements
 from werkzeug.security import generate_password_hash
 from werkzeug.utils import secure_filename
@@ -25,6 +25,33 @@ def get_event_points(user_id, event_id):
         EventPointLog.event_id == event_id
     ).scalar()
     return int(total or 0)
+
+def is_ready_to_release(challenge, progress, total_points):
+    """Nível manual ainda não liberado cujo tester já atingiu a meta de pontos."""
+    already_done = bool(progress and progress.is_completed)
+    return (challenge.challenge_type == 'manual'
+            and not already_done
+            and total_points > 0
+            and total_points >= (challenge.points or 0))
+
+def count_ready_to_release(event):
+    """Total de (tester, nível manual) prontos para liberar em um evento."""
+    points_map = get_event_points_map(event.id)
+    manual = [c for c in event.challenges if c.challenge_type == 'manual']
+    if not manual:
+        return 0
+    testers = User.query.filter(User.ra_username != 'Bot', User.is_active == True).all()
+    progress_rows = UserEventProgress.query.filter(
+        UserEventProgress.challenge_id.in_([c.id for c in manual])
+    ).all()
+    progress_by_key = {(p.user_id, p.challenge_id): p for p in progress_rows}
+    total = 0
+    for tester in testers:
+        pts = points_map.get(tester.id, 0)
+        for c in manual:
+            if is_ready_to_release(c, progress_by_key.get((tester.id, c.id)), pts):
+                total += 1
+    return total
 
 def get_event_points_map(event_id):
     """{user_id: total} de todos os testers de um evento, em uma única query."""
@@ -440,22 +467,16 @@ def manage_events():
         
     events = Event.query.order_by(Event.start_date.desc()).all()
     active_event = Event.query.filter_by(is_active=True).first()
-    pending_approvals = []
-    points_by_user = {}
 
+    # Quantos níveis manuais já estão com a meta de pontos batida e aguardando liberação
+    ready_to_release = 0
     if active_event:
-        points_by_user = get_event_points_map(active_event.id)
-        # Busca progressos de desafios MANUAIS que ainda NÃO estão completos
-        pending_approvals = UserEventProgress.query.join(EventChallenge).filter(
-            EventChallenge.event_id == active_event.id,
-            EventChallenge.challenge_type == 'manual',
-            UserEventProgress.is_completed == False
-        ).all()
+        ready_to_release = count_ready_to_release(active_event)
 
     return render_template('manager/events.html',
                            events=events,
-                           pending_approvals=pending_approvals,
-                           points_by_user=points_by_user)
+                           active_event=active_event,
+                           ready_to_release=ready_to_release)
 
 @manager_bp.route('/events/<int:event_id>/toggle', methods=['POST'])
 def toggle_event(event_id):
@@ -674,27 +695,36 @@ def monitor_event(event_id):
 
     for tester in testers:
         challenges_data = []
-        
+        total_points = points_map.get(tester.id, 0)
+        ready_count = 0
+
         for challenge in event.challenges:
             progress = UserEventProgress.query.filter_by(
-                user_id=tester.id, 
+                user_id=tester.id,
                 challenge_id=challenge.id
             ).first()
-            
+
             current_val = progress.current_value if progress else 0
             is_completed = progress.is_completed if progress else False
             target = challenge.target_value if challenge.target_value > 0 else 1
-            
+
             percent = min(int((current_val / target) * 100), 100)
-            
+            ready = is_ready_to_release(challenge, progress, total_points)
+            if ready:
+                ready_count += 1
+
             challenges_data.append({
+                'id': challenge.id,
                 'title': challenge.title,
                 'current': current_val,
                 'target': target,
                 'percent': percent,
-                'completed': is_completed
+                'completed': is_completed,
+                'is_manual': challenge.challenge_type == 'manual',
+                'required_points': challenge.points or 0,
+                'ready': ready
             })
-            
+
         recent_logs = EventPointLog.query.filter_by(
             user_id=tester.id, event_id=event.id
         ).order_by(EventPointLog.created_at.desc(), EventPointLog.id.desc()).limit(5).all()
@@ -702,10 +732,56 @@ def monitor_event(event_id):
         tester_progress.append({
             'tester': tester,
             'challenges': challenges_data,
-            'total_points': points_map.get(tester.id, 0),
+            'total_points': total_points,
+            'ready_count': ready_count,
             'recent_logs': recent_logs
         })
-    return render_template('manager/event_monitor.html', event=event, tester_progress=tester_progress)
+
+    # Quem tem níveis prontos para liberar aparece primeiro; depois ordem alfabética
+    tester_progress.sort(key=lambda i: (-i['ready_count'], i['tester'].ra_username.lower()))
+    ready_total = sum(i['ready_count'] for i in tester_progress)
+    return render_template('manager/event_monitor.html', event=event,
+                           tester_progress=tester_progress, ready_total=ready_total)
+
+@manager_bp.route('/events/<int:event_id>/challenge/<int:challenge_id>/status', methods=['POST'])
+def set_challenge_status(event_id, challenge_id):
+    """Libera (approve) ou desfaz (revoke) um nível manual de um tester, direto no Control Room."""
+    if session.get('role') not in ('Playtest Manager', 'Engineer'):
+        flash('Access Denied: only managers can release event levels.', 'danger')
+        return redirect(url_for('dashboard.index'))
+
+    event = Event.query.get_or_404(event_id)
+    challenge = EventChallenge.query.get_or_404(challenge_id)
+    if challenge.event_id != event.id:
+        abort(404)
+    tester = User.query.get_or_404(request.form.get('user_id', type=int))
+    action = request.form.get('action')
+    back = url_for('manager.monitor_event', event_id=event.id, _anchor=f'tester-{tester.id}')
+
+    if challenge.challenge_type != 'manual':
+        flash('This level is automatic and is unlocked by the tester progress.', 'warning')
+        return redirect(back)
+    if action not in ('approve', 'revoke'):
+        abort(400)
+
+    progress = UserEventProgress.query.filter_by(user_id=tester.id, challenge_id=challenge.id).first()
+    if not progress:
+        progress = UserEventProgress(user_id=tester.id, challenge_id=challenge.id, current_value=0)
+        db.session.add(progress)
+
+    if action == 'approve':
+        progress.current_value = challenge.target_value
+        progress.is_completed = True
+        progress.completed_at = datetime.utcnow()
+        flash(f"'{challenge.title}' released for {tester.ra_username}!", "success")
+    else:
+        progress.current_value = 0
+        progress.is_completed = False
+        progress.completed_at = None
+        flash(f"'{challenge.title}' was taken back from {tester.ra_username}.", "info")
+
+    db.session.commit()
+    return redirect(back)
 
 @manager_bp.route('/events/<int:event_id>/points', methods=['POST'])
 def add_event_points(event_id):
