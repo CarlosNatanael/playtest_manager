@@ -66,6 +66,13 @@
                             <a href="{{ url_for('dashboard.test_session', session_id=session.id) }}" class="btn btn-sm btn-outline-info fw-bold">
                                 <i class="bi bi-eye"></i> View
                             </a>
+                            <form action="{{ url_for('dashboard.retest_session', session_id=session.id) }}" method="POST" class="d-inline m-0"
+                                  onsubmit="return confirm('Pick this game up again for a re-test? Your current results will be kept and the action will be logged.');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <button type="submit" class="btn btn-sm btn-outline-warning fw-bold">
+                                    <i class="bi bi-arrow-repeat"></i> Re-test
+                                </button>
+                            </form>
                             
                             <div class="small text-white" style="min-width: 120px;">
                                 {% if session.concluded_at %}

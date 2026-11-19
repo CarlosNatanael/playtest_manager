@@ -310,6 +310,65 @@ def conclude_session(session_id):
     flash("Test successfully concluded! The report was sent to the Manager.", "success")
     return redirect(url_for('dashboard.index'))
 
+@dashboard_bp.route('/retest/<int:session_id>', methods=['POST'])
+def retest_session(session_id):
+    """Reabre uma sessão concluída para o tester refazer os testes.
+    Mantém todos os resultados/notas/checklist/impressões e registra no log."""
+    test_session = TestSession.query.get_or_404(session_id)
+
+    # SEGURANÇA: Validar Posse
+    if test_session.user_id != session.get('user_id'):
+        flash("Unauthorized access. You can only re-test your own sessions.", "danger")
+        return redirect(url_for('dashboard.history'))
+
+    if test_session.status != 'Concluded':
+        flash("Only concluded tests can be re-tested.", "warning")
+        return redirect(url_for('dashboard.history'))
+
+    game = test_session.game
+
+    already_active = TestSession.query.filter_by(
+        user_id=test_session.user_id, game_id=game.id, status='Active'
+    ).first()
+    if already_active:
+        flash("You already have an active test for this game.", "info")
+        return redirect(url_for('dashboard.test_session', session_id=already_active.id))
+
+    other_active_count = TestSession.query.filter(
+        TestSession.game_id == game.id,
+        TestSession.status == 'Active',
+        TestSession.id != test_session.id
+    ).count()
+    if game.is_collab:
+        if other_active_count >= 4:
+            flash("This Collab has reached its maximum capacity (4 Testers).", "warning")
+            return redirect(url_for('dashboard.history'))
+    elif other_active_count > 0:
+        flash("Someone else is currently testing this game.", "warning")
+        return redirect(url_for('dashboard.history'))
+
+    validated = sum(1 for r in test_session.results if r.trigger_status in ['OK', 'OK_AFTER_RETEST'])
+    issues = sum(1 for r in test_session.results if r.trigger_status in ['FALSE_TRIGGER', 'NO_TRIGGER', 'OK_AFTER_RETEST'])
+    previous_date = test_session.concluded_at.strftime('%d/%m/%Y %H:%M') if test_session.concluded_at else 'N/A'
+
+    # Reabre a MESMA sessão: resultados, notas, links, checklist e impressões são mantidos
+    test_session.status = 'Active'
+    test_session.concluded_at = None
+    test_session.expires_at = datetime.utcnow() + timedelta(days=14)
+    game.status = 'In Progress'
+
+    log = GameLog(
+        game_id=game.id,
+        username=session.get('username'),
+        action=(f"Picked up the game for RE-TEST (reopened session #{test_session.id}; "
+                f"previously concluded on {previous_date} UTC with {validated} validated / {issues} issues kept)")
+    )
+    db.session.add(log)
+    db.session.commit()
+
+    flash(f"You have picked up {game.title} for a re-test. Your previous results were kept.", "success")
+    return redirect(url_for('dashboard.test_session', session_id=test_session.id))
+
 @dashboard_bp.route('/session/validate_hash/<int:session_id>', methods=['POST'])
 def validate_hash(session_id):
     try:
