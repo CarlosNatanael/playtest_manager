@@ -1,20 +1,23 @@
 document.addEventListener("DOMContentLoaded", function() {
 
 
-    if (window.location.pathname.includes('/session/')) {
-        const sessionId = window.location.pathname.split('/').pop();
-        function sendData(payload) {
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    // sessionId e sendData ficam no escopo da função (fora do if) para que o
+    // autosave e o validador de hash consigam usá-los
+    const isSessionPage = window.location.pathname.includes('/session/');
+    const sessionId = window.location.pathname.split('/').pop();
 
-            fetch(`/dashboard/session/autosave/${sessionId}`, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
-                },
-                body: JSON.stringify(payload)
-            }).then(res => console.log("Auto-saved:", payload));
-        }
+    function sendData(payload) {
+        if (!isSessionPage) return;
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+        fetch(`/dashboard/session/autosave/${sessionId}`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify(payload)
+        }).then(res => console.log("Auto-saved:", payload));
     }
 
     // 1. Campos Globais (Textos)
@@ -89,7 +92,11 @@ document.addEventListener("DOMContentLoaded", function() {
             
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             
+            const controller = new AbortController();
+            const abortTimer = setTimeout(() => controller.abort(), 15000);
+
             fetch(`/dashboard/session/validate_hash/${sessionId}`, {
+                signal: controller.signal,
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
@@ -98,6 +105,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 body: JSON.stringify({ hash: hashValue })
             })
             .then(res => {
+                clearTimeout(abortTimer);
                 if(!res.ok) throw new Error("Erro de comunicação com o servidor");
                 return res.json();
             })

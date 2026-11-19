@@ -81,7 +81,7 @@ def validate_game_hash(game_id, hash_to_check):
         "i": game_id
     }
     try:
-        res = requests.get(url, params=params)
+        res = requests.get(url, params=params, timeout=10)
         data = res.json()
         
         results = data.get('Results', [])
