@@ -1,42 +1,183 @@
 document.addEventListener("DOMContentLoaded", function() {
 
-
-    // sessionId e sendData ficam no escopo da função (fora do if) para que o
-    // autosave e o validador de hash consigam usá-los
     const isSessionPage = window.location.pathname.includes('/session/');
     const sessionId = window.location.pathname.split('/').pop();
 
-    function sendData(payload) {
+    let globalPill = null;
+    let pillTimer = null;
+    let pendingRequests = 0;
+
+    function setGlobalStatus(state) {
         if (!isSessionPage) return;
+        if (!globalPill) {
+            globalPill = document.createElement('div');
+            globalPill.style.cssText = 'position:fixed;right:16px;bottom:16px;z-index:2000;padding:6px 14px;border-radius:20px;font-size:0.8rem;font-weight:600;display:none;box-shadow:0 2px 8px rgba(0,0,0,.5);';
+            document.body.appendChild(globalPill);
+        }
+        clearTimeout(pillTimer);
+        globalPill.style.display = 'block';
+        if (state === 'saving') {
+            globalPill.style.background = '#0dcaf0'; globalPill.style.color = '#000';
+            globalPill.textContent = 'Saving...';
+        } else if (state === 'saved') {
+            globalPill.style.background = '#198754'; globalPill.style.color = '#fff';
+            globalPill.textContent = 'All changes saved \u2713';
+            pillTimer = setTimeout(() => { globalPill.style.display = 'none'; }, 2500);
+        } else {
+            globalPill.style.background = '#dc3545'; globalPill.style.color = '#fff';
+            globalPill.textContent = 'Error saving! Click Save to try again.';
+        }
+    }
+
+    function sendData(payload) {
+        if (!isSessionPage) return Promise.resolve(false);
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-        fetch(`/dashboard/session/autosave/${sessionId}`, {
+        pendingRequests++;
+        setGlobalStatus('saving');
+
+        return fetch(`/dashboard/session/autosave/${sessionId}`, {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
                 'X-CSRFToken': csrfToken
             },
             body: JSON.stringify(payload)
-        }).then(res => console.log("Auto-saved:", payload));
+        })
+        .then(res => {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.json();
+        })
+        .then(data => {
+            if (data.status !== 'success') throw new Error(data.message || 'Save failed');
+            pendingRequests--;
+            if (pendingRequests === 0) setGlobalStatus('saved');
+            return true;
+        })
+        .catch(err => {
+            pendingRequests--;
+            console.error('Erro ao salvar:', err, payload);
+            setGlobalStatus('error');
+            return false;
+        });
     }
 
-    // 1. Campos Globais (Textos)
-    document.querySelectorAll('input[type="text"], textarea').forEach(el => {
-        el.addEventListener('blur', function() { 
-            const achCard = this.closest('.achievement-card');
-            if (achCard) {
-                const achId = achCard.querySelector('.trigger-radio').name.split('_')[1];
-                sendData({ 
-                    achievement_id: achId, 
-                    note: achCard.querySelector('.trigger-note').value,
-                    link: achCard.querySelector('.trigger-link').value 
-                });
-            } else if (!this.classList.contains('autosave-checklist')) {
-                // Salva Emulator, Core, Hash
-                sendData({ [this.name]: this.value });
+    const saveUnits = [];
+
+    function createSaveUnit(fields, anchor, getPayload, opts) {
+        opts = opts || {};
+        fields = fields.filter(Boolean);
+        if (!fields.length || !anchor) return;
+
+        const bar = document.createElement('div');
+        bar.className = 'd-flex align-items-center justify-content-end gap-2 mt-2' + (opts.pad ? ' px-3 pb-2' : '');
+        const status = document.createElement('span');
+        status.className = 'small text-muted';
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-sm btn-outline-secondary fw-bold';
+        btn.innerHTML = '<i class="bi bi-save"></i> Save';
+        bar.appendChild(status);
+        bar.appendChild(btn);
+        anchor.insertAdjacentElement('afterend', bar);
+
+        const unit = { dirty: false, saving: false };
+        saveUnits.push(unit);
+
+        function setState(state) {
+            btn.classList.remove('btn-outline-secondary', 'btn-warning', 'btn-danger', 'btn-success');
+            if (state === 'dirty') {
+                unit.dirty = true;
+                btn.classList.add('btn-warning'); status.className = 'small text-warning';
+                status.textContent = 'Unsaved changes';
+            } else if (state === 'saving') {
+                btn.classList.add('btn-outline-secondary'); status.className = 'small text-info';
+                status.textContent = 'Saving...';
+            } else if (state === 'saved') {
+                unit.dirty = false;
+                btn.classList.add('btn-success'); status.className = 'small text-success';
+                status.textContent = 'Saved \u2713';
+            } else if (state === 'error') {
+                unit.dirty = true;
+                btn.classList.add('btn-danger'); status.className = 'small text-danger';
+                status.textContent = 'Error saving - try again';
+            } else {
+                btn.classList.add('btn-outline-secondary'); status.className = 'small text-muted';
+                status.textContent = '';
+            }
+        }
+        setState('clean');
+
+        function save() {
+            if (unit.saving) return;
+            unit.saving = true;
+            setState('saving');
+            sendData(getPayload()).then(ok => {
+                unit.saving = false;
+                setState(ok ? 'saved' : 'error');
+            });
+        }
+
+        fields.forEach(f => {
+            f.addEventListener('input', () => setState('dirty'));
+            // Autosave de segurança ao sair do campo (só se houver mudanças)
+            f.addEventListener('blur', () => { if (unit.dirty) save(); });
+            // Enter em campos de uma linha também salva
+            if (f.tagName === 'INPUT') {
+                f.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); save(); } });
             }
         });
+        btn.addEventListener('click', save);
+    }
+
+    // Avisa se o tester tentar sair com texto não salvo
+    window.addEventListener('beforeunload', function(e) {
+        if (saveUnits.some(u => u.dirty || u.saving) || pendingRequests > 0) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
     });
+
+    if (isSessionPage) {
+        // Emulator, Core, Hash (cada um com seu botão Save)
+        document.querySelectorAll('input.autosave-global[type="text"]').forEach(el => {
+            const anchor = el.closest('.input-group') || el;
+            createSaveUnit([el], anchor, () => ({ [el.name]: el.value }));
+        });
+
+        // Notas + link de cada conquista (um botão Save por card)
+        document.querySelectorAll('.achievement-card').forEach(card => {
+            const radio = card.querySelector('.trigger-radio');
+            const note = card.querySelector('.trigger-note');
+            const link = card.querySelector('.trigger-link');
+            const box = card.querySelector('.evidence-box');
+            if (!radio || !note || !link || !box) return;
+            const achId = radio.name.split('_')[1];
+            // Insere o controle logo depois do campo de link
+            createSaveUnit([note, link], link, () => ({
+                achievement_id: achId, note: note.value, link: link.value
+            }));
+        });
+
+        // Observações do checklist (salvam o checklist inteiro)
+        document.querySelectorAll('textarea.autosave-checklist').forEach(el => {
+            createSaveUnit([el], el, collectChecklistPayload);
+        });
+
+        // Set Impressions
+        const impressions = document.querySelector('textarea[name="set_impressions"]');
+        if (impressions) {
+            createSaveUnit([impressions], impressions, () => ({ set_impressions: impressions.value }), { pad: true });
+        }
+    }
+
+    function collectChecklistPayload() {
+        const payload = {};
+        document.querySelectorAll('.autosave-checklist').forEach(input => {
+            payload[input.name] = input.type === 'checkbox' ? input.checked : input.value;
+        });
+        return { checklist_data: JSON.stringify(payload) };
+    }
 
     // 2. Rádios de Conquista
     document.querySelectorAll('.trigger-radio').forEach(radio => {
@@ -50,14 +191,11 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
 
-    // 3. Checklist
+    // 3. Checklist (checkboxes salvam na hora; observações têm botão Save próprio)
     document.querySelectorAll('.autosave-checklist').forEach(el => {
+        if (el.tagName === 'TEXTAREA') return;
         el.addEventListener('change', function() {
-            const payload = {};
-            document.querySelectorAll('.autosave-checklist').forEach(input => {
-                payload[input.name] = input.type === 'checkbox' ? input.checked : input.value;
-            });
-            sendData({ checklist_data: JSON.stringify(payload) });
+            sendData(collectChecklistPayload());
         });
     });
 
