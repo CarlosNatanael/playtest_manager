@@ -70,7 +70,7 @@
                             </div>
                         </div>
                         
-                        {% set total = session.game.achievements|length %}
+                        {% set total = session.game.active_achievements|length %}
                         {% set tested = session.results|length %}
                         {% set percent = (tested / total * 100)|round if total > 0 else 0 %}
 
@@ -154,7 +154,7 @@
                                 </div>
                             </div>
                         </td>
-                        <td>{{ game.achievements|length }}</td>
+                        <td>{{ game.active_achievements|length }}</td>
                         
                         <td>
                             {% if game.is_collab %}

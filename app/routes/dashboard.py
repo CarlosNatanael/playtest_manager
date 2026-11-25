@@ -149,7 +149,7 @@ def save_session(session_id):
     test_session.core = data.get('core')
     test_session.hash_used = data.get('hash_used')
     
-    for ach in test_session.game.achievements:
+    for ach in test_session.game.active_achievements:
         status = data.get(f'ach_{ach.id}')
         if status:
             result = TestResult.query.filter_by(

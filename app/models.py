@@ -112,6 +112,10 @@ class Game(db.Model):
         }
         return mapping.get(self.console_name, 'unknown')
 
+    @property
+    def active_achievements(self):
+        return [a for a in self.achievements if not a.is_void]
+
 class Achievement(db.Model):
     __tablename__ = 'achievements'
     
@@ -123,6 +127,10 @@ class Achievement(db.Model):
     points = db.Column(db.Integer, default=0)
     
     results = db.relationship('TestResult', backref='achievement', lazy=True)
+
+    @property
+    def is_void(self):
+        return (self.title or '').strip().upper().startswith('[VOID]')
 
 class Event(db.Model):
     __tablename__ = 'events'
@@ -161,9 +169,6 @@ class UserEventProgress(db.Model):
     completed_at = db.Column(db.DateTime, nullable=True)
 
 class EventPointLog(db.Model):
-    """Pontos de evento lançados manualmente pelo manager para um playtester.
-    O total do tester no evento é a soma de todos os lançamentos (pode haver
-    valores negativos para correções)."""
     __tablename__ = 'event_point_logs'
 
     id = db.Column(db.Integer, primary_key=True)

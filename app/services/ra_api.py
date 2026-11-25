@@ -44,6 +44,8 @@ def fetch_game_and_achievements(game_id, access_token=None):
         authors_data = {}
         
         for ach_id, ach_info in achievements_dict.items():
+            if (ach_info.get('Title') or '').strip().upper().startswith('[VOID]'):
+                continue
             author_name = ach_info.get('Author', '').strip()
             
             if author_name and author_name not in authors_data:
